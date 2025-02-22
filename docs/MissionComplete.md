@@ -132,109 +132,19 @@ The application uses JWT (JSON Web Tokens) for authentication. Users receive a t
 3. Client includes token in Authorization header for subsequent requests
 4. Server validates token and authorizes requests based on user role
 
+#### 3.3.3 Development Endpoints
+The application includes development-only endpoints for initial setup:
+
+- POST `/api/auth/dev/create-admin`
+  - Creates an admin user with the specified email and password
+  - Should be disabled in production
+  - Example request:
+    ```json
+    {
+      "email": "admin@example.com",
+      "password": "secure_password"
+    }
+    ```
+
 #### 3.3.2 Team & Challenge Management
-```csharp
-[HttpPost("/api/teams")]
-public async Task<IActionResult> CreateTeam([FromBody] TeamDto team)
-{
-    if (!ModelState.IsValid)
-    {
-        _logger.LogWarning("Invalid team creation request");
-        return BadRequest("Invalid input");
-    }
-    var result = await _teamService.CreateTeam(team);
-    return Ok(result);
-}
 ```
-```csharp
-[HttpPost("/api/challenges")]
-public async Task<IActionResult> CreateChallenge([FromBody] ChallengeDto challenge)
-{
-    if (!ModelState.IsValid)
-    {
-        _logger.LogWarning("Invalid challenge creation request");
-        return BadRequest("Invalid input");
-    }
-    var result = await _challengeService.CreateChallenge(challenge);
-    return Ok(result);
-}
-```
-#### 3.3.3 Progress Tracking
-```csharp
-[HttpGet("/api/progress/{playerId}")]
-public async Task<IActionResult> GetProgress(int playerId)
-{
-    var progress = await _progressService.GetPlayerProgress(playerId);
-    return Ok(progress);
-}
-```
-
-## 4. UI/UX Design
-- **Coach Dashboard:**
-  - Team management UI
-  - Challenge creation UI
-  - Progress matrix visualization
-- **Player Dashboard:**
-  - List of assigned challenges
-  - Completion log UI
-- **Mobile-first Design:**
-  - Responsive layout
-  - Push notifications
-
-## 5. Edge Cases & Error Handling
-### 5.1 Edge Cases
-- Player marks a challenge complete but reopens it.
-- Coach updates a challenge that has already been completed.
-- Network failure while logging a challenge.
-- Player attempts to log an expired challenge.
-- Time zone differences affecting challenge deadlines.
-- Coaches managing multiple teams with overlapping players.
-
-### 5.2 Error Handling
-- **Invalid Inputs:** Reject invalid data at API level.
-- **Concurrency Issues:** Lock mechanisms to prevent duplicate logs.
-- **Data Integrity:** Foreign key constraints to prevent orphaned data.
-
-## 6. Deployment & CI/CD
-- **Docker:** Containerized deployment with multi-stage builds
-  ```dockerfile
-  # Build stage
-  FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-  WORKDIR /src
-  COPY . .
-  RUN dotnet restore
-  RUN dotnet publish -c Release -o /app
-
-  # Runtime stage
-  FROM mcr.microsoft.com/dotnet/aspnet:8.0
-  WORKDIR /app
-  COPY --from=build /app .
-  ENTRYPOINT ["dotnet", "MissionComplete.dll"]
-  ```
-- **GitHub Actions:** Automated CI/CD pipeline
-  ```yaml
-  name: CI/CD
-  on:
-    push:
-      branches: [ main ]
-    pull_request:
-      branches: [ main ]
-  
-  jobs:
-    build-and-deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Build and test
-          run: |
-            docker build -t mission-complete .
-            docker run mission-complete dotnet test
-        - name: Deploy
-          if: github.ref == 'refs/heads/main'
-          run: |
-            docker tag mission-complete registry.example.com/mission-complete
-            docker push registry.example.com/mission-complete
-  ```
-
-## 7. Conclusion
-This app provides a structured way for coaches to track off-season training. With strong validation, error handling, and logging, the system ensures reliable data tracking. The matrix visualization helps coaches see progress at a glance, making training more effective. Coaches can now manage multiple teams, each with its own set of players and challenges, increasing flexibility and usability.

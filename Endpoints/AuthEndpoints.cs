@@ -26,6 +26,28 @@ public static class AuthEndpoints
             var token = GenerateJwtToken(user, config);
             return Results.Ok(new { Token = token });
         });
+
+        group.MapPost("/dev/create-admin", async (CreateAdminRequest request, ApplicationDbContext db) =>
+        {
+            if (await db.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return Results.BadRequest("Email already registered");
+            }
+
+            var user = new User
+            {
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = User.UserRole.Admin
+            };
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            return Results.Ok("Admin user created successfully");
+        })
+        .WithTags("Development")
+        .WithOpenApi();
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)
