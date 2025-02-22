@@ -63,6 +63,14 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
 - **Configuration:** User Secrets for development, Environment Variables for production
 
 ### 3.2 Data Models
+#### 3.2.0 User
+- **Properties:**
+  - Id: Unique identifier
+  - Email: User's email address
+  - PasswordHash: Hashed password using BCrypt
+  - Role: Enum (Player, Coach, Admin)
+  - CreatedAt: Timestamp of user creation
+
 #### 3.2.1 Team
 - **Properties:**
   - Id: Unique identifier
@@ -105,25 +113,25 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
 
 ### 3.3 API Endpoints
 #### 3.3.1 Authentication
-We are using JWT for authentication.
-```csharp
-[HttpPost("/api/auth/login")]
-public async Task<IActionResult> Login([FromBody] LoginRequest request)
+The application uses JWT (JSON Web Tokens) for authentication. Users receive a token upon successful login, which must be included in subsequent requests.
+
+#### 3.3.2 JWT Configuration
+```json
 {
-    if (!ModelState.IsValid)
-    {
-        _logger.LogWarning("Invalid login attempt");
-        return BadRequest("Invalid credentials");
-    }
-    var user = await _userService.Authenticate(request.Email, request.Password);
-    if (user == null)
-    {
-        _logger.LogWarning($"Failed login attempt for {request.Email}");
-        return Unauthorized("Invalid credentials");
-    }
-    return Ok(new { Token = _jwtService.GenerateToken(user) });
+  "Jwt": {
+    "Key": "<your-secret-key>",
+    "Issuer": "https://missioncomplete.com",
+    "Audience": "https://missioncomplete.com"
+  }
 }
 ```
+
+#### 3.3.3 Authentication Flow
+1. User submits email and password to `/api/auth/login`
+2. Server validates credentials and returns JWT token
+3. Client includes token in Authorization header for subsequent requests
+4. Server validates token and authorizes requests based on user role
+
 #### 3.3.2 Team & Challenge Management
 ```csharp
 [HttpPost("/api/teams")]

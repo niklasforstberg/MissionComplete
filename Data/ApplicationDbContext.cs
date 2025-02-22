@@ -14,4 +14,5 @@ public class ApplicationDbContext : DbContext
     public DbSet<Challenge> Challenges { get; set; }
     public DbSet<Player> Players { get; set; }
     public DbSet<ChallengeCompletion> ChallengeCompletions { get; set; }
+    public DbSet<User> Users { get; set; }
 } 
