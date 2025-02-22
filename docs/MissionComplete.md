@@ -56,13 +56,56 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
 
 ## 3. System Architecture
 ### 3.1 Tech Stack
-- **Frontend:** React (Next.js) + Tailwind CSS
-- **Backend:** .NET Core Web API (C#)
-- **Database:** SQL Server
+- **Frontend:** React + Tailwind CSS
+- **Backend:** .NET 8 Core Web API (C#)
+- **Database:** SQL Server @10.0.0.201 (using Entity Framework Core)
 - **Hosting:** Docker
+- **Configuration:** User Secrets for development, Environment Variables for production
 
-### 3.2 API Endpoints
-#### 3.2.1 Authentication
+### 3.2 Data Models
+#### 3.2.1 Team
+- **Properties:**
+  - Id: Unique identifier
+  - Name: Team name
+  - Description: Optional team description
+  - CreatedAt: Timestamp of team creation
+  - Players: Collection of players in the team
+  - Challenges: Collection of challenges assigned to the team
+
+#### 3.2.2 Player
+- **Properties:**
+  - Id: Unique identifier
+  - Name: Player's full name
+  - Email: Player's email address
+  - PhoneNumber: Optional contact number
+  - CreatedAt: Timestamp of player creation
+  - TeamId: Foreign key to Team
+  - CompletedChallenges: Collection of completed challenges
+
+#### 3.2.3 Challenge
+- **Properties:**
+  - Id: Unique identifier
+  - Name: Challenge name
+  - Description: Challenge details and instructions
+  - Type: Enum (Cardio, Strength, SkillBased, Other)
+  - Frequency: Enum (Daily, Weekly, Custom)
+  - StartDate: Challenge start date
+  - EndDate: Challenge end date
+  - CreatedAt: Timestamp of challenge creation
+  - TeamId: Foreign key to Team
+  - Completions: Collection of challenge completions
+
+#### 3.2.4 ChallengeCompletion
+- **Properties:**
+  - Id: Unique identifier
+  - CompletedAt: Timestamp of completion
+  - Notes: Optional completion notes
+  - PlayerId: Foreign key to Player
+  - ChallengeId: Foreign key to Challenge
+
+### 3.3 API Endpoints
+#### 3.3.1 Authentication
+We are using JWT for authentication.
 ```csharp
 [HttpPost("/api/auth/login")]
 public async Task<IActionResult> Login([FromBody] LoginRequest request)
@@ -81,7 +124,7 @@ public async Task<IActionResult> Login([FromBody] LoginRequest request)
     return Ok(new { Token = _jwtService.GenerateToken(user) });
 }
 ```
-#### 3.2.2 Team & Challenge Management
+#### 3.3.2 Team & Challenge Management
 ```csharp
 [HttpPost("/api/teams")]
 public async Task<IActionResult> CreateTeam([FromBody] TeamDto team)
@@ -108,7 +151,7 @@ public async Task<IActionResult> CreateChallenge([FromBody] ChallengeDto challen
     return Ok(result);
 }
 ```
-#### 3.2.3 Progress Tracking
+#### 3.3.3 Progress Tracking
 ```csharp
 [HttpGet("/api/progress/{playerId}")]
 public async Task<IActionResult> GetProgress(int playerId)
