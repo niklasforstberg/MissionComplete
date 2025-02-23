@@ -33,7 +33,15 @@ builder.Services.AddAuthorization();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        // Fallback to environment variable for Docker support
+        connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
+    }
+    options.UseSqlServer(connectionString ?? throw new InvalidOperationException("Connection string not found"));
+});
 
 var app = builder.Build();
 
