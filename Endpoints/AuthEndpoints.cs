@@ -27,7 +27,7 @@ public static class AuthEndpoints
             return Results.Ok(new { Token = token });
         });
 
-        group.MapPost("/dev/create-admin", async (CreateAdminRequest request, ApplicationDbContext db) =>
+        group.MapPost("/admin/create", async (CreateAdminRequest request, ApplicationDbContext db) =>
         {
             if (await db.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -46,7 +46,31 @@ public static class AuthEndpoints
 
             return Results.Ok("Admin user created successfully");
         })
-        .WithTags("Development")
+        .RequireAuthorization(policy => policy.RequireRole("Admin"))
+        .WithTags("Administration")
+        .WithOpenApi();
+
+        group.MapPost("/setup/first-admin", async (CreateAdminRequest request, ApplicationDbContext db, IConfiguration config) =>
+        {
+            if (await db.Users.AnyAsync(u => u.Role == User.UserRole.Admin))
+            {
+                return Results.BadRequest("Admin already exists. Use regular admin creation endpoint.");
+            }
+
+            var user = new User
+            {
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = User.UserRole.Admin
+            };
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            var token = GenerateJwtToken(user, config);
+            return Results.Ok(new { Token = token });
+        })
+        .WithTags("Setup")
         .WithOpenApi();
 
         group.MapPost("/register", async (RegisterRequest request, ApplicationDbContext db, IConfiguration config) =>
