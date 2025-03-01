@@ -6,13 +6,6 @@ public static class PlayerEndpoints
     {
         var group = app.MapGroup("/api");
 
-        group.MapGet("/me", GetCurrentPlayer)
-            .WithName("GetCurrentPlayer")
-            .WithOpenApi();
-    }
-
-    private static IResult GetCurrentPlayer()
-    {
-        return Results.Ok(new { Name = "TestPlayer" });
+        // The /me endpoint has been moved to AuthEndpoints
     }
 } 

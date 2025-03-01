@@ -8,6 +8,6 @@ public class Team
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     // Navigation properties
-    public ICollection<Player> Players { get; set; } = new List<Player>();
+    public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
     public ICollection<Challenge> Challenges { get; set; } = new List<Challenge>();
 } 

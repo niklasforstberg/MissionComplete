@@ -95,6 +95,39 @@ public static class AuthEndpoints
         })
         .WithTags("Authentication")
         .WithOpenApi();
+
+        group.MapGet("/me", async (HttpContext context, ApplicationDbContext db) =>
+        {
+            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Results.Unauthorized();
+
+            var user = await db.Users
+                .Include(u => u.TeamUsers)
+                    .ThenInclude(tu => tu.Team)
+                .FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
+
+            if (user == null)
+                return Results.NotFound();
+
+            return Results.Ok(new
+            {
+                id = user.Id,
+                email = user.Email,
+                role = user.Role.ToString(),
+                teams = user.TeamUsers.Select(tu => new
+                {
+                    id = tu.Team.Id,
+                    name = tu.Team.Name,
+                    role = tu.Role.ToString(),
+                    joinedAt = tu.JoinedAt
+                })
+            });
+        })
+        .RequireAuthorization()
+        .WithName("GetCurrentUser")
+        .WithTags("Authentication")
+        .WithOpenApi();
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)

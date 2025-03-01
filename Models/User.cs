@@ -8,6 +8,8 @@ public class User
     public UserRole Role { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
+
     public enum UserRole
     {
         Player,
