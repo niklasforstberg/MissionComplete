@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MissionComplete.Data;
 
@@ -11,9 +12,11 @@ using MissionComplete.Data;
 namespace MissionComplete.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250301175830_RemovePlayerTable")]
+    partial class RemovePlayerTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,6 +82,9 @@ namespace MissionComplete.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PlayerId")
+                        .HasColumnType("int");
+
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
@@ -86,9 +92,43 @@ namespace MissionComplete.Migrations
 
                     b.HasIndex("ChallengeId");
 
+                    b.HasIndex("PlayerId");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("ChallengeCompletion");
+                    b.ToTable("ChallengeCompletions");
+                });
+
+            modelBuilder.Entity("MissionComplete.Models.Player", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("Players");
                 });
 
             modelBuilder.Entity("MissionComplete.Models.Team", b =>
@@ -181,6 +221,10 @@ namespace MissionComplete.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("MissionComplete.Models.Player", null)
+                        .WithMany("CompletedChallenges")
+                        .HasForeignKey("PlayerId");
+
                     b.HasOne("MissionComplete.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -190,6 +234,17 @@ namespace MissionComplete.Migrations
                     b.Navigation("Challenge");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MissionComplete.Models.Player", b =>
+                {
+                    b.HasOne("MissionComplete.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("TeamUser", b =>
@@ -214,6 +269,11 @@ namespace MissionComplete.Migrations
             modelBuilder.Entity("MissionComplete.Models.Challenge", b =>
                 {
                     b.Navigation("Completions");
+                });
+
+            modelBuilder.Entity("MissionComplete.Models.Player", b =>
+                {
+                    b.Navigation("CompletedChallenges");
                 });
 
             modelBuilder.Entity("MissionComplete.Models.Team", b =>
