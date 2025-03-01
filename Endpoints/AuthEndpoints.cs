@@ -48,6 +48,29 @@ public static class AuthEndpoints
         })
         .WithTags("Development")
         .WithOpenApi();
+
+        group.MapPost("/register", async (RegisterRequest request, ApplicationDbContext db, IConfiguration config) =>
+        {
+            if (await db.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return Results.BadRequest("Email already registered");
+            }
+
+            var user = new User
+            {
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = request.IsCoach ? User.UserRole.Coach : User.UserRole.Player
+            };
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            var token = GenerateJwtToken(user, config);
+            return Results.Ok(new { Token = token });
+        })
+        .WithTags("Authentication")
+        .WithOpenApi();
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)
