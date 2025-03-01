@@ -15,7 +15,7 @@ docker run -d \
   --name missioncomplete \
   --restart unless-stopped \
   --env-file env.docker \
-  -p 8085:80 \
+  -p 8084:8080 \
   missioncomplete:latest
 
 # Clean up old images
