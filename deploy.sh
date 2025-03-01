@@ -1,17 +1,17 @@
 #!/bin/bash
 
 # Stop and remove existing container
-docker stop missioncomplete || true
-docker rm missioncomplete || true
+sudo docker stop missioncomplete || true
+sudo docker rm missioncomplete || true
 
 # Pull latest changes
-git pull origin main
+sudo git pull origin main
 
 # Build new image
-docker build -t missioncomplete:latest .
+sudo docker build -t missioncomplete:latest .
 
 # Run new container
-docker run -d \
+sudo docker run -d \
   --name missioncomplete \
   --restart unless-stopped \
   --env-file env.docker \
@@ -19,4 +19,4 @@ docker run -d \
   missioncomplete:latest
 
 # Clean up old images
-docker image prune -f 
+sudo docker image prune -f 
