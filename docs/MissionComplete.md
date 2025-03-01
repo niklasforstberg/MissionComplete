@@ -74,7 +74,6 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
   - PasswordHash: Hashed password using BCrypt
   - Role: Enum (Player, Coach, Admin)
   - CreatedAt: Timestamp of user creation
-  - IsInvitedUser: Boolean indicating if user was created through team invite
 
 #### 3.2.1 Team
 - **Properties:**
@@ -82,18 +81,16 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
   - Name: Team name
   - Description: Optional team description
   - CreatedAt: Timestamp of team creation
-  - Players: Collection of players in the team
-  - Challenges: Collection of challenges assigned to the team
+  - TeamUsers: Collection of team memberships
 
-#### 3.2.2 Player
+#### 3.2.2 TeamUser
 - **Properties:**
-  - Id: Unique identifier
-  - Name: Player's full name
-  - Email: Player's email address
-  - PhoneNumber: Optional contact number
-  - CreatedAt: Timestamp of player creation
   - TeamId: Foreign key to Team
-  - CompletedChallenges: Collection of completed challenges
+  - UserId: Foreign key to User
+  - Role: Enum (Player, Coach)
+  - JoinedAt: Timestamp of when user joined team
+  - Team: Navigation property to Team
+  - User: Navigation property to User
 
 #### 3.2.3 Challenge
 - **Properties:**
@@ -106,15 +103,16 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
   - EndDate: Challenge end date
   - CreatedAt: Timestamp of challenge creation
   - TeamId: Foreign key to Team
-  - Completions: Collection of challenge completions
 
 #### 3.2.4 ChallengeCompletion
 - **Properties:**
   - Id: Unique identifier
   - CompletedAt: Timestamp of completion
   - Notes: Optional completion notes
-  - PlayerId: Foreign key to Player
+  - UserId: Foreign key to User
   - ChallengeId: Foreign key to Challenge
+  - User: Navigation property to User
+  - Challenge: Navigation property to Challenge
 
 ### 3.3 API Endpoints
 #### 3.3.1 Authentication
