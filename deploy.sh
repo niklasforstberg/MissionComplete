@@ -1,17 +1,22 @@
 #!/bin/bash
 
-# Stop and remove existing container
-sudo docker stop missioncomplete || true
-sudo docker rm missioncomplete || true
+# Pull latest changes with error checking
+echo "Fetching latest changes..."
+git fetch origin main
+git reset --hard origin/main
 
-# Pull latest changes
-sudo git pull origin main
+# Stop and remove existing container
+echo "Stopping and removing existing container..."
+docker stop missioncomplete || true
+docker rm missioncomplete || true
 
 # Build new image
-sudo docker build -t missioncomplete:latest .
+echo "Building new image..."
+docker build -t missioncomplete:latest .
 
 # Run new container
-sudo docker run -d \
+echo "Starting new container..."
+docker run -d \
   --name missioncomplete \
   --restart unless-stopped \
   --env-file env.docker \
@@ -19,4 +24,7 @@ sudo docker run -d \
   missioncomplete:latest
 
 # Clean up old images
-sudo docker image prune -f 
+echo "Cleaning up old images..."
+docker image prune -f
+
+echo "Deployment complete!" 
