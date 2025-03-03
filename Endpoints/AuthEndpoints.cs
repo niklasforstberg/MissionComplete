@@ -4,38 +4,18 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using MissionComplete.Data;
 using MissionComplete.Models;
-using MissionComplete.Models.DTOs;
+using MissionComplete.Models.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
+using MissionComplete.Models.DTOs.User;
+using Microsoft.AspNetCore.Authorization;
 namespace MissionComplete.Endpoints;
 
 public static class AuthEndpoints
 {
     public static void MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/auth");
-
         // Public endpoints (no auth required)
-        var publicGroup = group.MapGroup("")
-            .WithTags("Public");
-        MapPublicEndpoints(publicGroup);
-
-        // Protected endpoints (auth required)
-        var protectedGroup = group.MapGroup("")
-            .RequireAuthorization()
-            .WithTags("Authenticated");
-        MapProtectedEndpoints(protectedGroup);
-
-        // Admin endpoints
-        var adminGroup = group.MapGroup("")
-            .RequireAuthorization(policy => policy.RequireRole("Admin"))
-            .WithTags("Admin");
-        MapAdminEndpoints(adminGroup);
-    }
-
-    private static void MapPublicEndpoints(IEndpointRouteBuilder group)
-    {
-        // Login endpoint
-        group.MapPost("/login", async (LoginRequest request, ApplicationDbContext db, IConfiguration config) =>
+        app.MapPost("/api/auth/login", async (LoginDto request, ApplicationDbContext db, IConfiguration config) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             
@@ -48,8 +28,32 @@ public static class AuthEndpoints
             return Results.Ok(new { Token = token });
         });
 
-        // First admin setup endpoint
-        group.MapPost("/setup/first-admin", async (CreateAdminRequest request, ApplicationDbContext db, IConfiguration config) =>
+        app.MapPost("/api/auth/register", async (RegisterDto request, ApplicationDbContext db, IConfiguration config) =>
+        {
+            if (await db.Users.AnyAsync(u => u.Email == request.Email))
+            {
+                return Results.BadRequest("Email already registered");
+            }
+
+            var userRole = request.Role == TeamUser.TeamRole.Coach 
+                ? User.UserRole.Coach 
+                : User.UserRole.Player;
+
+            var user = new User
+            {
+                Email = request.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                Role = userRole
+            };
+
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
+
+            var token = GenerateJwtToken(user, config);
+            return Results.Ok(new { Token = token });
+        });
+
+        app.MapPost("/api/auth/setup/first-admin", async (CreateAdminDto request, ApplicationDbContext db, IConfiguration config) =>
         {
             if (await db.Users.AnyAsync(u => u.Role == User.UserRole.Admin))
             {
@@ -68,38 +72,11 @@ public static class AuthEndpoints
 
             var token = GenerateJwtToken(user, config);
             return Results.Ok(new { Token = token });
-        })
-        .WithOpenApi();
+        });
 
-        // Register endpoint
-        group.MapPost("/register", async (RegisterRequest request, ApplicationDbContext db, IConfiguration config) =>
-        {
-            if (await db.Users.AnyAsync(u => u.Email == request.Email))
-            {
-                return Results.BadRequest("Email already registered");
-            }
-
-            var user = new User
-            {
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = request.IsCoach ? User.UserRole.Coach : User.UserRole.Player
-            };
-
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
-
-            var token = GenerateJwtToken(user, config);
-            return Results.Ok(new { Token = token });
-        })
-        .WithOpenApi();
-    }
-
-    private static void MapProtectedEndpoints(IEndpointRouteBuilder group)
-    {
-        // Current user endpoint
-        group.MapGet("/me", async (HttpContext context, ApplicationDbContext db) =>
-        {
+        // Protected endpoints (auth required)
+        app.MapGet("/api/auth/me", [Authorize] async (HttpContext context, ApplicationDbContext db) =>
+        {           
             var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
                 return Results.Unauthorized();
@@ -113,35 +90,32 @@ public static class AuthEndpoints
             if (user == null)
                 return Results.NotFound();
 
-            return Results.Ok(new
+            var response = new UserDto
             {
-                id = user.Id,
-                email = user.Email,
-                role = user.Role.ToString(),
-                invited = user.Invited,
-                invitedBy = user.InvitedBy == null ? null : new
+                Id = user.Id,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                Invited = user.Invited,
+                InvitedBy = user.InvitedBy == null ? null : new UserInviterDto
                 {
-                    id = user.InvitedBy.Id,
-                    email = user.InvitedBy.Email,
-                    role = user.InvitedBy.Role.ToString()
+                    Id = user.InvitedBy.Id,
+                    Email = user.InvitedBy.Email,
+                    Role = user.InvitedBy.Role.ToString()
                 },
-                teams = user.TeamUsers.Select(tu => new
+                Teams = user.TeamUsers.Select(tu => new UserTeamDto
                 {
-                    id = tu.Team.Id,
-                    name = tu.Team.Name,
-                    role = tu.Role.ToString(),
-                    joinedAt = tu.JoinedAt
-                })
-            });
-        })
-        .WithName("GetCurrentUser")
-        .WithOpenApi();
-    }
+                    Id = tu.Team.Id,
+                    Name = tu.Team.Name,
+                    Role = tu.Role.ToString(),
+                    JoinedAt = tu.JoinedAt
+                }).ToList()
+            };
 
-    private static void MapAdminEndpoints(IEndpointRouteBuilder group)
-    {
-        // Admin creation endpoint
-        group.MapPost("/admin/create", async (CreateAdminRequest request, ApplicationDbContext db) =>
+            return Results.Ok(response);
+        });
+
+        // Admin endpoints
+        app.MapPost("/api/auth/admin/create", async (CreateAdminDto request, ApplicationDbContext db) =>
         {
             if (await db.Users.AnyAsync(u => u.Email == request.Email))
             {
@@ -160,7 +134,7 @@ public static class AuthEndpoints
 
             return Results.Ok("Admin user created successfully");
         })
-        .WithOpenApi();
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)

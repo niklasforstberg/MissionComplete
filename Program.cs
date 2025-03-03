@@ -95,6 +95,7 @@ app.UseAuthorization();
 // Register endpoints
 app.MapAuthEndpoints();
 app.MapTeamEndpoints();
+app.MapUserEndpoints();
 
 app.Run();
 

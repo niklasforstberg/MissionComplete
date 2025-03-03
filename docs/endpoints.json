@@ -2,269 +2,276 @@
   "auth": {
     "base": "/api/auth",
     "endpoints": {
-      "public": {
-        "tags": ["Authentication"],
-        "endpoints": {
-          "login": {
-            "method": "POST",
-            "path": "/login",
-            "description": "Authenticate a user and receive a JWT token",
-            "request": {
-              "body": {
-                "email": "string",
-                "password": "string"
-              }
-            },
-            "response": {
-              "200": {
-                "token": "string"
-              },
-              "401": "Unauthorized - Invalid credentials"
-            }
-          },
-          "register": {
-            "method": "POST",
-            "path": "/register",
-            "description": "Register a new user (player or coach)",
-            "request": {
-              "body": {
-                "email": "string",
-                "password": "string",
-                "isCoach": "boolean"
-              }
-            },
-            "response": {
-              "200": {
-                "token": "string"
-              },
-              "400": "Bad Request - Email already registered"
-            }
-          },
-          "setupFirstAdmin": {
-            "method": "POST",
-            "path": "/setup/first-admin",
-            "description": "Create the first admin user (only works when no admin exists)",
-            "request": {
-              "body": {
-                "email": "string",
-                "password": "string"
-              }
-            },
-            "response": {
-              "200": {
-                "token": "string"
-              },
-              "400": "Bad Request - Admin already exists"
-            }
+      "login": {
+        "method": "POST",
+        "path": "/login",
+        "description": "Authenticate a user and receive a JWT token",
+        "request": {
+          "body": {
+            "email": "string",
+            "password": "string"
           }
+        },
+        "response": {
+          "200": {
+            "token": "string"
+          },
+          "401": "Unauthorized - Invalid credentials"
         }
       },
-      "protected": {
+      "register": {
+        "method": "POST",
+        "path": "/register",
+        "description": "Register a new user (player or coach)",
+        "request": {
+          "body": {
+            "email": "string",
+            "password": "string",
+            "role": "string (Player or Coach)"
+          }
+        },
+        "response": {
+          "200": {
+            "token": "string"
+          },
+          "400": "Bad Request - Email already registered"
+        }
+      },
+      "me": {
+        "method": "GET",
+        "path": "/me",
         "auth": "Required",
-        "endpoints": {
-          "getCurrentUser": {
-            "method": "GET",
-            "path": "/me",
-            "description": "Get current authenticated user information",
-            "response": {
-              "200": {
-                "id": "number",
-                "email": "string",
-                "role": "string",
-                "invited": "boolean",
-                "invitedBy": {
-                  "id": "number",
-                  "email": "string",
-                  "role": "string"
-                },
-                "teams": [{
-                  "id": "number",
-                  "name": "string",
-                  "role": "string",
-                  "joinedAt": "string"
-                }]
-              },
-              "401": "Unauthorized",
-              "404": "User not found"
-            }
-          }
+        "description": "Get current authenticated user information",
+        "response": {
+          "200": {
+            "id": "number",
+            "email": "string",
+            "role": "string",
+            "invited": "boolean",
+            "invitedBy": {
+              "id": "number",
+              "email": "string",
+              "role": "string"
+            },
+            "teams": [{
+              "id": "number",
+              "name": "string",
+              "role": "string",
+              "joinedAt": "string"
+            }]
+          },
+          "401": "Unauthorized"
         }
       },
-      "admin": {
-        "auth": "Required (Admin role)",
-        "endpoints": {
-          "createAdmin": {
-            "method": "POST",
-            "path": "/admin/create",
-            "description": "Create a new admin user (requires admin authorization)",
-            "request": {
-              "body": {
-                "email": "string",
-                "password": "string"
-              }
-            },
-            "response": {
-              "200": "Admin user created successfully",
-              "400": "Bad Request - Email already registered",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires admin role"
-            }
+      "setupFirstAdmin": {
+        "method": "POST",
+        "path": "/setup/first-admin",
+        "description": "Create the first admin user (only works when no admin exists)",
+        "request": {
+          "body": {
+            "email": "string",
+            "password": "string"
           }
+        },
+        "response": {
+          "200": {
+            "token": "string"
+          },
+          "400": "Bad Request - Admin already exists"
+        }
+      },
+      "createAdmin": {
+        "method": "POST",
+        "path": "/admin/create",
+        "auth": "Required (Admin role)",
+        "description": "Create a new admin user",
+        "request": {
+          "body": {
+            "email": "string",
+            "password": "string"
+          }
+        },
+        "response": {
+          "200": "Admin user created successfully",
+          "400": "Bad Request - Email already registered",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires admin role"
         }
       }
     }
   },
-  "player": {
-    "base": "/api",
+  "users": {
+    "base": "/api/users",
     "endpoints": {
-      "getCurrentPlayer": {
+      "getUserByEmail": {
         "method": "GET",
-        "path": "/me",
-        "description": "Get current player information",
+        "path": "/by-email/{email}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Get user information by email",
         "response": {
           "200": {
-            "name": "string"
-          }
+            "id": "number",
+            "email": "string",
+            "role": "string",
+            "invited": "boolean",
+            "invitedBy": {
+              "id": "number",
+              "email": "string",
+              "role": "string"
+            },
+            "teams": [{
+              "id": "number",
+              "name": "string",
+              "role": "string",
+              "joinedAt": "string"
+            }]
+          },
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
         }
       }
     }
   },
   "teams": {
     "base": "/api/teams",
-    "auth": "Required (Coach or Admin role)",
     "endpoints": {
-      "management": {
-        "tags": ["Team Management"],
-        "endpoints": {
-          "createTeam": {
-            "method": "POST",
-            "path": "/",
-            "description": "Create a new team",
-            "request": {
-              "body": {
-                "name": "string",
-                "description": "string?"
-              }
-            },
-            "response": {
-              "201": "Team object",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
-          },
-          "getTeams": {
-            "method": "GET",
-            "path": "/",
-            "description": "Get all teams with basic info",
-            "response": {
-              "200": [{
-                "id": "number",
-                "name": "string",
-                "description": "string?",
-                "playerCount": "number"
-              }],
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
-          },
-          "getTeam": {
-            "method": "GET",
-            "path": "/{id}",
-            "description": "Get detailed team information",
-            "response": {
-              "200": {
-                "id": "number",
-                "name": "string",
-                "description": "string?",
-                "players": [{
-                  "id": "number",
-                  "email": "string",
-                  "joinedAt": "string"
-                }],
-                "coaches": [{
-                  "id": "number",
-                  "email": "string",
-                  "joinedAt": "string"
-                }]
-              },
-              "404": "Not Found",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
-          },
-          "updateTeam": {
-            "method": "PUT",
-            "path": "/{id}",
-            "description": "Update team information",
-            "request": {
-              "body": {
-                "name": "string",
-                "description": "string?"
-              }
-            },
-            "response": {
-              "200": "Updated team object",
-              "404": "Not Found",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
-          },
-          "deleteTeam": {
-            "method": "DELETE",
-            "path": "/{id}",
-            "description": "Delete a team",
-            "response": {
-              "200": "Success",
-              "404": "Not Found",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
+      "createTeam": {
+        "method": "POST",
+        "path": "/",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Create a new team",
+        "request": {
+          "body": {
+            "name": "string",
+            "description": "string?"
           }
+        },
+        "response": {
+          "201": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "createdAt": "string",
+            "members": [{
+              "userId": "number",
+              "email": "string",
+              "role": "string",
+              "joinedAt": "string"
+            }]
+          },
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
         }
       },
-      "members": {
-        "tags": ["Team Members"],
-        "endpoints": {
-          "addTeamMember": {
-            "method": "POST",
-            "path": "/{id}/members",
-            "description": "Add a member to the team and set their invitation status",
-            "request": {
-              "body": {
-                "userId": "number",
-                "role": "string (Player or Coach)"
-              }
-            },
-            "response": {
-              "200": {
-                "message": "Success",
-                "user": {
-                  "id": "number",
-                  "email": "string",
-                  "invited": "boolean",
-                  "invitedBy": {
-                    "id": "number",
-                    "email": "string",
-                    "role": "string"
-                  }
-                }
-              },
-              "404": "Team or User Not Found",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
+      "getTeams": {
+        "method": "GET",
+        "path": "/",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Get all teams",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "playerCount": "number"
+          }],
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "getTeam": {
+        "method": "GET",
+        "path": "/{id}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Get detailed team information",
+        "response": {
+          "200": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "createdAt": "string",
+            "members": [{
+              "userId": "number",
+              "email": "string",
+              "role": "string",
+              "joinedAt": "string"
+            }]
           },
-          "removeTeamMember": {
-            "method": "DELETE",
-            "path": "/{id}/members/{userId}",
-            "description": "Remove a member from the team",
-            "response": {
-              "200": "Success",
-              "404": "Member not found in team",
-              "401": "Unauthorized",
-              "403": "Forbidden - Requires coach/admin role"
-            }
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "updateTeam": {
+        "method": "PUT",
+        "path": "/{id}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Update team information",
+        "request": {
+          "body": {
+            "name": "string",
+            "description": "string?"
           }
+        },
+        "response": {
+          "200": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "createdAt": "string",
+            "members": []
+          },
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "deleteTeam": {
+        "method": "DELETE",
+        "path": "/{id}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Delete a team",
+        "response": {
+          "200": "Success",
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "addTeamMember": {
+        "method": "POST",
+        "path": "/{id}/members",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Add a member to the team. If the user doesn't exist, they will be created and marked as invited.",
+        "request": {
+          "body": {
+            "email": "string",
+            "role": "string (Player or Coach)"
+          }
+        },
+        "response": {
+          "200": {
+            "userId": "number",
+            "email": "string",
+            "role": "string",
+            "joinedAt": "string"
+          },
+          "404": "Team Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "removeTeamMember": {
+        "method": "DELETE",
+        "path": "/{id}/members/{userId}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Remove a member from the team",
+        "response": {
+          "200": "Success",
+          "404": "Member not found in team",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
         }
       }
     }

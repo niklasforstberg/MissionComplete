@@ -1,8 +1,7 @@
-namespace MissionComplete.Models.DTOs;
+namespace MissionComplete.Models.DTOs.Auth;
 
-public class RegisterRequest
+public class LoginDto
 {
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public bool IsCoach { get; set; }
 } 

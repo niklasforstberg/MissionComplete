@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MissionComplete.Data;
 using MissionComplete.Models;
-using MissionComplete.Models.DTOs;
+using MissionComplete.Models.DTOs.Team;
 using System.Security.Claims;
 
 namespace MissionComplete.Endpoints;
@@ -10,24 +10,8 @@ public static class TeamEndpoints
 {
     public static void MapTeamEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/teams")
-            .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
-
-        // Team management endpoints
-        var managementGroup = group.MapGroup("")
-            .WithTags("Team Management");
-        MapTeamManagementEndpoints(managementGroup);
-
-        // Team member management endpoints
-        var memberGroup = group.MapGroup("")
-            .WithTags("Team Members");
-        MapTeamMemberEndpoints(memberGroup);
-    }
-
-    private static void MapTeamManagementEndpoints(IEndpointRouteBuilder group)
-    {
         // Create team
-        group.MapPost("/", async (CreateTeamRequest request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/teams", async (CreateTeamDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var user = await db.Users.FindAsync(userId);
@@ -50,42 +34,47 @@ public static class TeamEndpoints
             db.Teams.Add(team);
             await db.SaveChangesAsync();
 
-            var response = new TeamResponse(
-                team.Id,
-                team.Name,
-                team.Description,
-                team.CreatedAt,
-                new[] 
+            var response = new TeamDto
+            {
+                Id = team.Id,
+                Name = team.Name,
+                Description = team.Description,
+                CreatedAt = team.CreatedAt,
+                Members = new List<TeamMemberDto>
                 {
-                    new TeamMemberResponse(
-                        userId,
-                        user!.Email,
-                        TeamUser.TeamRole.Coach.ToString(),
-                        teamUser.JoinedAt
-                    )
+                    new TeamMemberDto
+                    {
+                        UserId = userId,
+                        Email = user!.Email,
+                        Role = TeamUser.TeamRole.Coach.ToString(),
+                        JoinedAt = teamUser.JoinedAt
+                    }
                 }
-            );
+            };
 
             return Results.Created($"/api/teams/{team.Id}", response);
-        });
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Get all teams
-        group.MapGet("/", async (ApplicationDbContext db) =>
+        app.MapGet("/api/teams", async (ApplicationDbContext db) =>
         {
             var teams = await db.Teams
-                .Select(t => new TeamListResponse(
-                    t.Id,
-                    t.Name,
-                    t.Description,
-                    t.TeamUsers.Count(tu => tu.Role == TeamUser.TeamRole.Player)
-                ))
+                .Select(t => new TeamListDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Description = t.Description,
+                    PlayerCount = t.TeamUsers.Count(tu => tu.Role == TeamUser.TeamRole.Player)
+                })
                 .ToListAsync();
 
             return Results.Ok(teams);
-        });
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Get single team
-        group.MapGet("/{id}", async (int id, ApplicationDbContext db) =>
+        app.MapGet("/api/teams/{id}", async (int id, ApplicationDbContext db) =>
         {
             var team = await db.Teams
                 .Include(t => t.TeamUsers)
@@ -95,24 +84,27 @@ public static class TeamEndpoints
             if (team == null)
                 return Results.NotFound();
 
-            var response = new TeamResponse(
-                team.Id,
-                team.Name,
-                team.Description,
-                team.CreatedAt,
-                team.TeamUsers.Select(tu => new TeamMemberResponse(
-                    tu.User.Id,
-                    tu.User.Email,
-                    tu.Role.ToString(),
-                    tu.JoinedAt
-                ))
-            );
+            var response = new TeamDto
+            {
+                Id = team.Id,
+                Name = team.Name,
+                Description = team.Description,
+                CreatedAt = team.CreatedAt,
+                Members = team.TeamUsers.Select(tu => new TeamMemberDto
+                {
+                    UserId = tu.User.Id,
+                    Email = tu.User.Email,
+                    Role = tu.Role.ToString(),
+                    JoinedAt = tu.JoinedAt
+                }).ToList()
+            };
 
             return Results.Ok(response);
-        });
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Update team
-        group.MapPut("/{id}", async (int id, UpdateTeamRequest request, ApplicationDbContext db) =>
+        app.MapPut("/api/teams/{id}", async (int id, UpdateTeamDto request, ApplicationDbContext db) =>
         {
             var team = await db.Teams.FindAsync(id);
             if (team == null)
@@ -122,11 +114,21 @@ public static class TeamEndpoints
             team.Description = request.Description;
             await db.SaveChangesAsync();
 
-            return Results.Ok(team);
-        });
+            var response = new TeamDto
+            {
+                Id = team.Id,
+                Name = team.Name,
+                Description = team.Description,
+                CreatedAt = team.CreatedAt,
+                Members = new List<TeamMemberDto>()
+            };
+
+            return Results.Ok(response);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Delete team
-        group.MapDelete("/{id}", async (int id, ApplicationDbContext db) =>
+        app.MapDelete("/api/teams/{id}", async (int id, ApplicationDbContext db) =>
         {
             var team = await db.Teams.FindAsync(id);
             if (team == null)
@@ -136,13 +138,11 @@ public static class TeamEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
-    }
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
-    private static void MapTeamMemberEndpoints(IEndpointRouteBuilder group)
-    {
         // Add team member
-        group.MapPost("/{id}/members", async (int id, AddTeamMemberRequest request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             
@@ -150,29 +150,50 @@ public static class TeamEndpoints
             if (team == null)
                 return Results.NotFound("Team not found");
 
-            var user = await db.Users.FindAsync(request.UserId);
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
-                return Results.NotFound("User not found");
-
-            // Set invitation information
-            user.Invited = true;
-            user.InvitedById = coachId;
+            {
+                user = new User
+                {
+                    Email = request.Email,
+                    Invited = true,
+                    InvitedById = coachId,
+                    Role = User.UserRole.Player
+                };
+                db.Users.Add(user);
+                await db.SaveChangesAsync();
+            }
+            else 
+            {
+                user.Invited = true;
+                user.InvitedById = coachId;
+            }
 
             var teamUser = new TeamUser
             {
                 TeamId = id,
-                UserId = request.UserId,
-                Role = request.Role
+                UserId = user.Id,
+                Role = request.Role,
+                JoinedAt = DateTime.UtcNow
             };
 
             team.TeamUsers.Add(teamUser);
             await db.SaveChangesAsync();
 
-            return Results.Ok();
-        });
+            var response = new TeamMemberDto
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                Role = request.Role.ToString(),
+                JoinedAt = teamUser.JoinedAt
+            };
+
+            return Results.Ok(response);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Remove team member
-        group.MapDelete("/{id}/members/{userId}", async (int id, int userId, ApplicationDbContext db) =>
+        app.MapDelete("/api/teams/{id}/members/{userId}", async (int id, int userId, ApplicationDbContext db) =>
         {
             var teamUser = await db.TeamUsers
                 .FirstOrDefaultAsync(tu => tu.TeamId == id && tu.UserId == userId);
@@ -184,10 +205,11 @@ public static class TeamEndpoints
             await db.SaveChangesAsync();
 
             return Results.Ok();
-        });
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
     }
 }
 
 public record CreateTeamRequest(string Name, string? Description);
 public record UpdateTeamRequest(string Name, string? Description);
-public record AddTeamMemberRequest(int UserId, TeamUser.TeamRole Role); 
+public record AddTeamMemberDto(string Email, TeamUser.TeamRole Role); 
