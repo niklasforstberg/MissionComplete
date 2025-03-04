@@ -275,5 +275,148 @@
         }
       }
     }
+  },
+  "challenges": {
+    "base": "/api/challenges",
+    "endpoints": {
+      "createChallenge": {
+        "method": "POST",
+        "path": "/api/teams/{teamId}/challenges",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Create a new challenge for a team",
+        "request": {
+          "body": {
+            "name": "string",
+            "description": "string?",
+            "type": "enum (ChallengeType)",
+            "frequency": "enum (ChallengeFrequency)",
+            "startDate": "string (date)",
+            "endDate": "string (date)"
+          }
+        },
+        "response": {
+          "201": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string"
+          },
+          "404": "Team not found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "getTeamChallenges": {
+        "method": "GET",
+        "path": "/api/teams/{teamId}/challenges",
+        "auth": "Required",
+        "description": "Get all challenges for a team",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string",
+            "completionCount": "number"
+          }],
+          "401": "Unauthorized"
+        }
+      },
+      "getChallenge": {
+        "method": "GET",
+        "path": "/{id}",
+        "auth": "Required",
+        "description": "Get detailed challenge information",
+        "response": {
+          "200": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string",
+            "completions": [{
+              "id": "number",
+              "userId": "number",
+              "userEmail": "string",
+              "completedAt": "string",
+              "notes": "string?"
+            }]
+          },
+          "404": "Not Found",
+          "401": "Unauthorized"
+        }
+      },
+      "updateChallenge": {
+        "method": "PUT",
+        "path": "/{id}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Update challenge information",
+        "request": {
+          "body": {
+            "name": "string",
+            "description": "string?",
+            "type": "enum (ChallengeType)",
+            "frequency": "enum (ChallengeFrequency)",
+            "startDate": "string (date)",
+            "endDate": "string (date)"
+          }
+        },
+        "response": {
+          "200": {
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string"
+          },
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "deleteChallenge": {
+        "method": "DELETE",
+        "path": "/{id}",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Delete a challenge",
+        "response": {
+          "200": "Success",
+          "404": "Not Found",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "completeChallenge": {
+        "method": "POST",
+        "path": "/{id}/complete",
+        "auth": "Required",
+        "description": "Log a challenge completion",
+        "request": {
+          "body": {
+            "notes": "string?"
+          }
+        },
+        "response": {
+          "200": {
+            "id": "number",
+            "userId": "number",
+            "completedAt": "string",
+            "notes": "string?"
+          },
+          "404": "Challenge not found",
+          "401": "Unauthorized"
+        }
+      }
+    }
   }
 }
