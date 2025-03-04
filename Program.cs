@@ -96,6 +96,7 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapTeamEndpoints();
 app.MapUserEndpoints();
+app.MapChallengeEndpoints();
 
 app.Run();
 
