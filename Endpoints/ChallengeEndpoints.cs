@@ -12,9 +12,9 @@ public static class ChallengeEndpoints
     public static void MapChallengeEndpoints(this IEndpointRouteBuilder app)
     {
         // Create challenge
-        app.MapPost("/api/teams/{teamId}/challenges", async (int teamId, CreateChallengeDto request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/challenge", async (CreateChallengeDto request, HttpContext context, ApplicationDbContext db) =>
         {
-            var team = await db.Teams.FindAsync(teamId);
+            var team = await db.Teams.FindAsync(request.TeamId);
             if (team == null)
                 return Results.NotFound("Team not found");
 
@@ -28,19 +28,19 @@ public static class ChallengeEndpoints
                 Frequency = request.Frequency,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                TeamId = teamId,
+                TeamId = request.TeamId,
                 CreatedById = userId
             };
 
             db.Challenges.Add(challenge);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/teams/{teamId}/challenges/{challenge.Id}", challenge);
+            return Results.Created($"/api/challenges/{challenge.Id}", challenge);
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Get team challenges
-        app.MapGet("/api/teams/{teamId}/challenges", async (int teamId, ApplicationDbContext db) =>
+        app.MapGet("/api/team/{teamId}/challenges", async (int teamId, ApplicationDbContext db) =>
         {
             var challenges = await db.Challenges
                 .Where(c => c.TeamId == teamId)
@@ -63,17 +63,23 @@ public static class ChallengeEndpoints
         .RequireAuthorization();
 
         // Get single challenge
-        app.MapGet("/api/challenges/{id}", async (int id, ApplicationDbContext db) =>
+        app.MapGet("/api/challenge/{id}", async (int id, HttpContext context, ApplicationDbContext db) =>
         {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
             var challenge = await db.Challenges
-                .Include(c => c.Completions)
-                .ThenInclude(cc => cc.User)
+                .Include(c => c.Team)
+                .ThenInclude(t => t.TeamUsers)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (challenge == null)
                 return Results.NotFound();
 
-            var response = new ChallengeDetailDto
+            // Check if user is member of the team
+            if (!challenge.Team.TeamUsers.Any(tu => tu.UserId == userId))
+                return Results.NotFound();
+
+            var response = new ChallengeDto
             {
                 Id = challenge.Id,
                 Name = challenge.Name,
@@ -82,14 +88,7 @@ public static class ChallengeEndpoints
                 Frequency = challenge.Frequency,
                 StartDate = challenge.StartDate,
                 EndDate = challenge.EndDate,
-                Completions = challenge.Completions.Select(cc => new ChallengeCompletionDto
-                {
-                    Id = cc.Id,
-                    UserId = cc.UserId,
-                    UserEmail = cc.User.Email,
-                    CompletedAt = cc.CompletedAt,
-                    Notes = cc.Notes
-                }).ToList()
+                CreatedById = challenge.CreatedById
             };
 
             return Results.Ok(response);
@@ -97,11 +96,16 @@ public static class ChallengeEndpoints
         .RequireAuthorization();
 
         // Update challenge
-        app.MapPut("/api/challenges/{id}", async (int id, UpdateChallengeDto request, ApplicationDbContext db) =>
+        app.MapPut("/api/challenge/{id}", async (int id, UpdateChallengeDto request, HttpContext context, ApplicationDbContext db) =>
         {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var challenge = await db.Challenges.FindAsync(id);
+
             if (challenge == null)
                 return Results.NotFound();
+
+            if (challenge.CreatedById != userId)
+                return Results.Forbid();
 
             challenge.Name = request.Name;
             challenge.Description = request.Description;
@@ -113,24 +117,29 @@ public static class ChallengeEndpoints
             await db.SaveChangesAsync();
             return Results.Ok(challenge);
         })
-        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+        .RequireAuthorization();
 
         // Delete challenge
-        app.MapDelete("/api/challenges/{id}", async (int id, ApplicationDbContext db) =>
+        app.MapDelete("/api/challenge/{id}", async (int id, HttpContext context, ApplicationDbContext db) =>
         {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var challenge = await db.Challenges.FindAsync(id);
+
             if (challenge == null)
                 return Results.NotFound();
+
+            if (challenge.CreatedById != userId)
+                return Results.Forbid();
 
             db.Challenges.Remove(challenge);
             await db.SaveChangesAsync();
 
             return Results.Ok();
         })
-        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+        .RequireAuthorization();
 
         // Log challenge completion
-        app.MapPost("/api/challenges/{id}/complete", async (int id, LogCompletionDto request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/challenge/{id}/complete", async (int id, LogCompletionDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 

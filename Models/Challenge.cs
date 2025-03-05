@@ -25,9 +25,8 @@ public class Challenge
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-    // Navigation properties
     public int TeamId { get; set; }
+    // Navigation properties
     public Team Team { get; set; } = null!;
     public ICollection<ChallengeCompletion> Completions { get; set; } = new List<ChallengeCompletion>();
     public int CreatedById { get; set; }
