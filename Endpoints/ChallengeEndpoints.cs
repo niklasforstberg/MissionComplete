@@ -12,11 +12,13 @@ public static class ChallengeEndpoints
     public static void MapChallengeEndpoints(this IEndpointRouteBuilder app)
     {
         // Create challenge
-        app.MapPost("/api/teams/{teamId}/challenges", async (int teamId, CreateChallengeDto request, ApplicationDbContext db) =>
+        app.MapPost("/api/teams/{teamId}/challenges", async (int teamId, CreateChallengeDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var team = await db.Teams.FindAsync(teamId);
             if (team == null)
                 return Results.NotFound("Team not found");
+
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
             var challenge = new Challenge
             {
@@ -26,7 +28,8 @@ public static class ChallengeEndpoints
                 Frequency = request.Frequency,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                TeamId = teamId
+                TeamId = teamId,
+                CreatedById = userId
             };
 
             db.Challenges.Add(challenge);
@@ -50,7 +53,8 @@ public static class ChallengeEndpoints
                     Frequency = c.Frequency,
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
-                    CompletionCount = c.Completions.Count
+                    CompletionCount = c.Completions.Count,
+                    CreatedById = c.CreatedById
                 })
                 .ToListAsync();
 
@@ -129,7 +133,7 @@ public static class ChallengeEndpoints
         app.MapPost("/api/challenges/{id}/complete", async (int id, LogCompletionDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            
+
             var completion = new ChallengeCompletion
             {
                 ChallengeId = id,
@@ -144,5 +148,28 @@ public static class ChallengeEndpoints
             return Results.Ok(completion);
         })
         .RequireAuthorization();
+
+        app.MapGet("/api/challenges/my", async (HttpContext context, ApplicationDbContext db) =>
+        {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var challenges = await db.Challenges
+                .Where(c => c.CreatedById == userId)
+                .Select(c => new ChallengeDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description,
+                    Type = c.Type,
+                    Frequency = c.Frequency,
+                    StartDate = c.StartDate,
+                    EndDate = c.EndDate,
+                    CompletionCount = c.Completions.Count
+                })
+                .ToListAsync();
+
+            return Results.Ok(challenges);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
     }
-} 
+}
