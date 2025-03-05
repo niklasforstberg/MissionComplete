@@ -11,4 +11,5 @@ public class ChallengeDto
     public DateTime EndDate { get; set; }
     public int CompletionCount { get; set; }
     public int CreatedById { get; set; }
+    public int TeamId { get; set; }
 }

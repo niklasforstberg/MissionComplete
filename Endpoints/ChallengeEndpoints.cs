@@ -44,7 +44,8 @@ public static class ChallengeEndpoints
                 Frequency = challenge.Frequency,
                 StartDate = challenge.StartDate,
                 EndDate = challenge.EndDate,
-                CreatedById = challenge.CreatedById
+                CreatedById = challenge.CreatedById,
+                TeamId = challenge.TeamId
             };
 
             return Results.Created($"/api/challenges/{challenge.Id}", responseDto);
@@ -66,7 +67,8 @@ public static class ChallengeEndpoints
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
                     CompletionCount = c.Completions.Count,
-                    CreatedById = c.CreatedById
+                    CreatedById = c.CreatedById,
+                    TeamId = c.TeamId
                 })
                 .ToListAsync();
 
@@ -100,7 +102,8 @@ public static class ChallengeEndpoints
                 Frequency = challenge.Frequency,
                 StartDate = challenge.StartDate,
                 EndDate = challenge.EndDate,
-                CreatedById = challenge.CreatedById
+                CreatedById = challenge.CreatedById,
+                TeamId = challenge.TeamId
             };
 
             return Results.Ok(response);
@@ -125,6 +128,7 @@ public static class ChallengeEndpoints
             challenge.Frequency = request.Frequency;
             challenge.StartDate = request.StartDate;
             challenge.EndDate = request.EndDate;
+            challenge.TeamId = request.TeamId;
 
             await db.SaveChangesAsync();
             return Results.Ok(challenge);
@@ -186,7 +190,8 @@ public static class ChallengeEndpoints
                     Frequency = c.Frequency,
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
-                    CompletionCount = c.Completions.Count
+                    CompletionCount = c.Completions.Count,
+                    CreatedById = c.CreatedById
                 })
                 .ToListAsync();
 
