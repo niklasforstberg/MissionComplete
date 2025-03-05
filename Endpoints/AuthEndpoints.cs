@@ -18,7 +18,7 @@ public static class AuthEndpoints
         app.MapPost("/api/auth/login", async (LoginDto request, ApplicationDbContext db, IConfiguration config) =>
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
-            
+
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return Results.Unauthorized();
@@ -35,8 +35,8 @@ public static class AuthEndpoints
                 return Results.BadRequest("Email already registered");
             }
 
-            var userRole = request.Role == TeamUser.TeamRole.Coach 
-                ? User.UserRole.Coach 
+            var userRole = request.Role == TeamUser.TeamRole.Coach
+                ? User.UserRole.Coach
                 : User.UserRole.Player;
 
             var user = new User
@@ -76,7 +76,7 @@ public static class AuthEndpoints
 
         // Protected endpoints (auth required)
         app.MapGet("/api/auth/me", [Authorize] async (HttpContext context, ApplicationDbContext db) =>
-        {           
+        {
             var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null)
                 return Results.Unauthorized();
@@ -135,6 +135,37 @@ public static class AuthEndpoints
             return Results.Ok("Admin user created successfully");
         })
         .RequireAuthorization(policy => policy.RequireRole("Admin"));
+
+        // Inside MapAuthEndpoints method, add this before the closing brace:
+#if DEBUG
+        app.MapGet("/api/auth/dev-login", async (ApplicationDbContext db, IConfiguration config) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == 1);
+            if (user == null) return Results.NotFound();
+
+            // Generate token with 1 year expiration for dev login
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                config["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not found")));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Email, user.Email ?? throw new InvalidOperationException("User email is required")),
+                new Claim(ClaimTypes.Role, user.Role.ToString() ?? throw new InvalidOperationException("User role is required")),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString() ?? throw new InvalidOperationException("User ID is required"))
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: config["Jwt:Issuer"],
+                audience: config["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddYears(1),
+                signingCredentials: credentials
+            );
+
+            return Results.Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token) });
+        });
+#endif
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)
@@ -160,4 +191,4 @@ public static class AuthEndpoints
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
-} 
+}
