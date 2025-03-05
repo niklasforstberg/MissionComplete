@@ -35,7 +35,19 @@ public static class ChallengeEndpoints
             db.Challenges.Add(challenge);
             await db.SaveChangesAsync();
 
-            return Results.Created($"/api/challenges/{challenge.Id}", challenge);
+            var responseDto = new ChallengeDto
+            {
+                Id = challenge.Id,
+                Name = challenge.Name,
+                Description = challenge.Description,
+                Type = challenge.Type,
+                Frequency = challenge.Frequency,
+                StartDate = challenge.StartDate,
+                EndDate = challenge.EndDate,
+                CreatedById = challenge.CreatedById
+            };
+
+            return Results.Created($"/api/challenges/{challenge.Id}", responseDto);
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
@@ -158,6 +170,7 @@ public static class ChallengeEndpoints
         })
         .RequireAuthorization();
 
+        // Get challenges created by user
         app.MapGet("/api/challenges/my", async (HttpContext context, ApplicationDbContext db) =>
         {
             var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
