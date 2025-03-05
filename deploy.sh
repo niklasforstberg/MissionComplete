@@ -12,7 +12,8 @@ docker rm missioncomplete || true
 
 # Build new image
 echo "Building new image..."
-docker build -t missioncomplete:latest .
+docker build --no-cache -t missioncomplete:latest . \
+  --build-arg NETSDK_USEMSBUILDOUTDIR=1
 
 # Run new container
 echo "Starting new container..."
