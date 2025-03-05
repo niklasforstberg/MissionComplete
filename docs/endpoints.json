@@ -277,15 +277,16 @@
     }
   },
   "challenges": {
-    "base": "/api/challenges",
+    "base": "/api/challenge",
     "endpoints": {
       "createChallenge": {
         "method": "POST",
-        "path": "/api/teams/{teamId}/challenges",
+        "path": "/",
         "auth": "Required (Coach or Admin role)",
-        "description": "Create a new challenge for a team",
+        "description": "Create a new challenge",
         "request": {
           "body": {
+            "teamId": "number",
             "name": "string",
             "description": "string?",
             "type": "enum (ChallengeType)",
@@ -302,7 +303,9 @@
             "type": "string",
             "frequency": "string",
             "startDate": "string",
-            "endDate": "string"
+            "endDate": "string",
+            "teamId": "number",
+            "createdById": "number"
           },
           "404": "Team not found",
           "401": "Unauthorized",
@@ -311,7 +314,7 @@
       },
       "getTeamChallenges": {
         "method": "GET",
-        "path": "/api/teams/{teamId}/challenges",
+        "path": "/team/{teamId}/challenges",
         "auth": "Required",
         "description": "Get all challenges for a team",
         "response": {
@@ -323,7 +326,8 @@
             "frequency": "string",
             "startDate": "string",
             "endDate": "string",
-            "completionCount": "number"
+            "completionCount": "number",
+            "createdById": "number"
           }],
           "401": "Unauthorized"
         }
@@ -332,7 +336,7 @@
         "method": "GET",
         "path": "/{id}",
         "auth": "Required",
-        "description": "Get detailed challenge information",
+        "description": "Get challenge information (only if user is member of the team)",
         "response": {
           "200": {
             "id": "number",
@@ -342,23 +346,17 @@
             "frequency": "string",
             "startDate": "string",
             "endDate": "string",
-            "completions": [{
-              "id": "number",
-              "userId": "number",
-              "userEmail": "string",
-              "completedAt": "string",
-              "notes": "string?"
-            }]
+            "createdById": "number"
           },
-          "404": "Not Found",
+          "404": "Not Found or User not team member",
           "401": "Unauthorized"
         }
       },
       "updateChallenge": {
         "method": "PUT",
         "path": "/{id}",
-        "auth": "Required (Coach or Admin role)",
-        "description": "Update challenge information",
+        "auth": "Required",
+        "description": "Update challenge information (only if user is creator)",
         "request": {
           "body": {
             "name": "string",
@@ -381,19 +379,19 @@
           },
           "404": "Not Found",
           "401": "Unauthorized",
-          "403": "Forbidden - Requires coach/admin role"
+          "403": "Forbidden - Not challenge creator"
         }
       },
       "deleteChallenge": {
         "method": "DELETE",
         "path": "/{id}",
-        "auth": "Required (Coach or Admin role)",
-        "description": "Delete a challenge",
+        "auth": "Required",
+        "description": "Delete a challenge (only if user is creator)",
         "response": {
           "200": "Success",
           "404": "Not Found",
           "401": "Unauthorized",
-          "403": "Forbidden - Requires coach/admin role"
+          "403": "Forbidden - Not challenge creator"
         }
       },
       "completeChallenge": {
@@ -408,12 +406,11 @@
         },
         "response": {
           "200": {
-            "id": "number",
+            "challengeId": "number",
             "userId": "number",
             "completedAt": "string",
             "notes": "string?"
           },
-          "404": "Challenge not found",
           "401": "Unauthorized"
         }
       },
@@ -431,8 +428,7 @@
             "frequency": "string",
             "startDate": "string",
             "endDate": "string",
-            "completionCount": "number",
-            "createdById": "number"
+            "completionCount": "number"
           }],
           "401": "Unauthorized",
           "403": "Forbidden - Requires coach/admin role"
