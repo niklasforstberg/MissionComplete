@@ -416,6 +416,27 @@
           "404": "Challenge not found",
           "401": "Unauthorized"
         }
+      },
+      "getMyChallenges": {
+        "method": "GET",
+        "path": "/my",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Get all challenges created by the current user",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string",
+            "completionCount": "number",
+            "createdById": "number"
+          }],
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
       }
     }
   }
