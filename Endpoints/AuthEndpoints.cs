@@ -94,13 +94,13 @@ public static class AuthEndpoints
             {
                 Id = user.Id,
                 Email = user.Email,
-                Role = user.Role.ToString(),
+                Role = user.Role?.ToString() ?? "User",
                 Invited = user.Invited,
                 InvitedBy = user.InvitedBy == null ? null : new UserInviterDto
                 {
                     Id = user.InvitedBy.Id,
                     Email = user.InvitedBy.Email,
-                    Role = user.InvitedBy.Role.ToString()
+                    Role = user.InvitedBy.Role?.ToString() ?? "User"
                 },
                 Teams = user.TeamUsers.Select(tu => new UserTeamDto
                 {
