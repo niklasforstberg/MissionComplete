@@ -99,6 +99,7 @@ public static class AuthEndpoints
                 Id = user.Id,
                 Email = user.Email,
                 Role = user.Role?.ToString() ?? "User",
+                HasPasswordSet = user.HasPasswordSet,
                 Invited = user.Invited,
                 InvitedBy = user.InvitedBy == null ? null : new UserInviterDto
                 {
@@ -130,7 +131,8 @@ public static class AuthEndpoints
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = User.UserRole.Admin
+                Role = User.UserRole.Admin,
+                HasPasswordSet = true
             };
 
             db.Users.Add(user);
