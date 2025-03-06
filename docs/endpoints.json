@@ -16,6 +16,10 @@
           "200": {
             "token": "string"
           },
+          "400": {
+            "requiresPasswordSet": "boolean",
+            "message": "string"
+          },
           "401": "Unauthorized - Invalid credentials"
         }
       },
@@ -96,6 +100,24 @@
           "400": "Bad Request - Email already registered",
           "401": "Unauthorized",
           "403": "Forbidden - Requires admin role"
+        }
+      },
+      "setPassword": {
+        "method": "POST",
+        "path": "/set-password",
+        "auth": "Required",
+        "description": "Set password for authenticated user",
+        "request": {
+          "body": {
+            "password": "string"
+          }
+        },
+        "response": {
+          "200": {
+            "message": "string"
+          },
+          "401": "Unauthorized",
+          "404": "User not found"
         }
       }
     }

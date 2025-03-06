@@ -10,6 +10,7 @@ public class User
     public User? InvitedBy { get; set; }
     public UserRole? Role { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool HasPasswordSet { get; set; }
 
     public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
 
@@ -19,4 +20,4 @@ public class User
         Coach,
         Admin
     }
-} 
+}

@@ -145,7 +145,7 @@ public static class TeamEndpoints
         app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db) =>
         {
             var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            
+
             var team = await db.Teams.FindAsync(id);
             if (team == null)
                 return Results.NotFound("Team not found");
@@ -158,12 +158,13 @@ public static class TeamEndpoints
                     Email = request.Email,
                     Invited = true,
                     InvitedById = coachId,
-                    Role = User.UserRole.Player
+                    Role = User.UserRole.Player,
+                    HasPasswordSet = false
                 };
                 db.Users.Add(user);
                 await db.SaveChangesAsync();
             }
-            else 
+            else
             {
                 user.Invited = true;
                 user.InvitedById = coachId;
@@ -212,4 +213,4 @@ public static class TeamEndpoints
 
 public record CreateTeamRequest(string Name, string? Description);
 public record UpdateTeamRequest(string Name, string? Description);
-public record AddTeamMemberDto(string Email, TeamUser.TeamRole Role); 
+public record AddTeamMemberDto(string Email, TeamUser.TeamRole Role);

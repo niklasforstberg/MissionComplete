@@ -19,10 +19,14 @@ public static class AuthEndpoints
         {
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
 
-            if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            {
+            if (user == null)
                 return Results.Unauthorized();
-            }
+
+            if (!user.HasPasswordSet)
+                return Results.BadRequest(new { RequiresPasswordSet = true, Message = "Password needs to be set" });
+
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                return Results.Unauthorized();
 
             var token = GenerateJwtToken(user, config);
             return Results.Ok(new { Token = token });
@@ -166,6 +170,24 @@ public static class AuthEndpoints
             return Results.Ok(new { Token = new JwtSecurityTokenHandler().WriteToken(token) });
         });
 #endif
+
+        // Add this new endpoint
+        app.MapPost("/api/auth/set-password", [Authorize] async (SetPasswordDto request, HttpContext context, ApplicationDbContext db) =>
+        {
+            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null)
+                return Results.Unauthorized();
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
+            if (user == null)
+                return Results.NotFound();
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            user.HasPasswordSet = true;
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { Message = "Password set successfully" });
+        });
     }
 
     private static string GenerateJwtToken(User user, IConfiguration config)

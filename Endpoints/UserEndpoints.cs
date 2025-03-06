@@ -47,6 +47,7 @@ public static class UserEndpoints
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
+        // Get all teams for a user
         app.MapGet("/api/user/teams", async (ClaimsPrincipal user, ApplicationDbContext db) =>
         {
             var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
