@@ -191,7 +191,8 @@ public static class ChallengeEndpoints
                     StartDate = c.StartDate,
                     EndDate = c.EndDate,
                     CompletionCount = c.Completions.Count,
-                    CreatedById = c.CreatedById
+                    CreatedById = c.CreatedById,
+                    TeamId = c.TeamId
                 })
                 .ToListAsync();
 
