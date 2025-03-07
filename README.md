@@ -9,9 +9,14 @@ This is the web api for the app MissionComplete, that lets a coach give the team
 5. dotnet user-secrets set "ConnectionStrings:DefaultConnection" "your-database-connection-string"
 6. dotnet user-secrets set "Jwt:Issuer" "http://localhost"
 7. dotnet user-secrets set "Jwt:Audience" "http://localhost"
-8. dotnet migrations add InitialCreate
-9. dotnet database update
-10. dotnet run
+8. dotnet user-secrets set "SmtpServer" "smtp.gmail.com"
+9. dotnet user-secrets set "SmtpPort" "25"
+10. dotnet user-secrets set "SmtpUsername" "your-email@gmail.com"
+11. dotnet user-secrets set "SmtpPassword" "your-app-password"
+12. dotnet user-secrets set "SmtpEnableSsl" "true"
+13. dotnet migrations add InitialCreate
+14. dotnet database update
+15. dotnet run
 
 ## Swagger
 
@@ -22,3 +27,8 @@ The swagger ui is available at https://localhost:5192/swagger
 You need a database, I recommend using Docker to run a local instance of SQL Server.
 
 You can also deploy this using the provided docker file. Do not forget to add the user secrets to the deployment target.
+
+## Email
+
+You need to set up an email account to send emails from.
+
