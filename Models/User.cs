@@ -10,7 +10,8 @@ public class User
     public User? InvitedBy { get; set; }
     public UserRole? Role { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public bool HasPasswordSet { get; set; }
+    public string? Token { get; set; }
+    public DateTime? TokenExpires { get; set; }
 
     public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
 
