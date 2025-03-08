@@ -22,9 +22,6 @@ public static class AuthEndpoints
             if (user == null)
                 return Results.Unauthorized();
 
-            if (!user.HasPasswordSet)
-                return Results.BadRequest(new { RequiresPasswordSet = true, Message = "Password needs to be set" });
-
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
                 return Results.Unauthorized();
 
@@ -99,7 +96,6 @@ public static class AuthEndpoints
                 Id = user.Id,
                 Email = user.Email,
                 Role = user.Role?.ToString() ?? "User",
-                HasPasswordSet = user.HasPasswordSet,
                 Invited = user.Invited,
                 InvitedBy = user.InvitedBy == null ? null : new UserInviterDto
                 {
@@ -131,8 +127,7 @@ public static class AuthEndpoints
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = User.UserRole.Admin,
-                HasPasswordSet = true
+                Role = User.UserRole.Admin
             };
 
             db.Users.Add(user);
@@ -173,22 +168,23 @@ public static class AuthEndpoints
         });
 #endif
 
-        // Add this new endpoint
-        app.MapPost("/api/auth/set-password", [Authorize] async (SetPasswordDto request, HttpContext context, ApplicationDbContext db) =>
+        // Replace set-password endpoint with:
+        app.MapPost("/api/auth/set-password", async (SetPasswordWithTokenDto request, ApplicationDbContext db, IConfiguration config) =>
         {
-            var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null)
-                return Results.Unauthorized();
+            var user = await db.Users.FirstOrDefaultAsync(u =>
+                u.Token == request.Token &&
+                u.TokenExpires > DateTime.UtcNow);
 
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id == int.Parse(userId));
             if (user == null)
-                return Results.NotFound();
+                return Results.BadRequest("Invalid or expired token");
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            user.HasPasswordSet = true;
+            user.Token = null;
+            user.TokenExpires = null;
             await db.SaveChangesAsync();
 
-            return Results.Ok(new { Message = "Password set successfully" });
+            var token = GenerateJwtToken(user, config);
+            return Results.Ok(new { Token = token });
         });
     }
 

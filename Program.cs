@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-
+using MissionComplete.Integrations;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -80,6 +80,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
     options.UseSqlServer(connectionString ?? throw new InvalidOperationException("Connection string not found"));
 });
+
+builder.Services.AddScoped<SmtpEmailSender>();
 
 var app = builder.Build();
 

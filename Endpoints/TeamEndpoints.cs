@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MissionComplete.Data;
 using MissionComplete.Models;
+using MissionComplete.Integrations;
 using MissionComplete.Models.DTOs.Team;
 using System.Security.Claims;
 
@@ -142,7 +143,7 @@ public static class TeamEndpoints
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Add team member
-        app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db, SmtpEmailSender emailSender) =>
         {
             var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
@@ -153,16 +154,25 @@ public static class TeamEndpoints
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
+                var token = GenerateSecureToken();
                 user = new User
                 {
                     Email = request.Email,
                     Invited = true,
                     InvitedById = coachId,
                     Role = User.UserRole.Player,
-                    HasPasswordSet = false
+                    Token = token,
+                    TokenExpires = DateTime.UtcNow.AddHours(48)
                 };
                 db.Users.Add(user);
-                await db.SaveChangesAsync();
+
+                await emailSender.SendInvitationEmail(new InvitationDto
+                {
+                    InviteeEmail = request.Email,
+                    Token = token,
+                    TeamName = team.Name,
+                    InviterName = user.Email
+                });
             }
             else
             {
@@ -208,6 +218,14 @@ public static class TeamEndpoints
             return Results.Ok();
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+    }
+
+    private static string GenerateSecureToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+            .Replace("/", "_")
+            .Replace("+", "-")
+            .Replace("=", "");
     }
 }
 
