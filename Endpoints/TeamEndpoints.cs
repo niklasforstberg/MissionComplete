@@ -14,8 +14,8 @@ public static class TeamEndpoints
         // Create team
         app.MapPost("/api/teams", async (CreateTeamDto request, HttpContext context, ApplicationDbContext db) =>
         {
-            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var user = await db.Users.FindAsync(userId);
+            var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var coach = await db.Users.FindAsync(coachId);
 
             var team = new Team
             {
@@ -24,11 +24,10 @@ public static class TeamEndpoints
                 CreatedAt = DateTime.UtcNow
             };
 
-            var teamUser = new TeamUser
+            var teamCoach = new TeamCoach
             {
                 Team = team,
-                UserId = userId,
-                Role = TeamUser.TeamRole.Coach,
+                CoachId = coachId,
                 JoinedAt = DateTime.UtcNow
             };
 
@@ -41,16 +40,16 @@ public static class TeamEndpoints
                 Name = team.Name,
                 Description = team.Description,
                 CreatedAt = team.CreatedAt,
-                Members = new List<TeamMemberDto>
+                Coaches = new List<TeamCoachDto>
                 {
-                    new TeamMemberDto
+                    new TeamCoachDto
                     {
-                        UserId = userId,
-                        Email = user!.Email,
-                        Role = TeamUser.TeamRole.Coach.ToString(),
-                        JoinedAt = teamUser.JoinedAt
+                        UserId = coachId,
+                        Email = coach!.Email,
+                        JoinedAt = teamCoach.JoinedAt
                     }
-                }
+                },
+                Members = new List<TeamMemberDto>()
             };
 
             return Results.Created($"/api/teams/{team.Id}", response);
@@ -65,8 +64,7 @@ public static class TeamEndpoints
                 {
                     Id = t.Id,
                     Name = t.Name,
-                    Description = t.Description,
-                    PlayerCount = t.TeamUsers.Count(tu => tu.Role == TeamUser.TeamRole.Player)
+                    Description = t.Description
                 })
                 .ToListAsync();
 
@@ -95,7 +93,6 @@ public static class TeamEndpoints
                 {
                     UserId = tu.User.Id,
                     Email = tu.User.Email,
-                    Role = tu.Role.ToString(),
                     JoinedAt = tu.JoinedAt
                 }).ToList()
             };
@@ -151,6 +148,7 @@ public static class TeamEndpoints
             if (team == null)
                 return Results.NotFound("Team not found");
 
+            //If the user does not exist, create them
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
@@ -184,7 +182,6 @@ public static class TeamEndpoints
             {
                 TeamId = id,
                 UserId = user.Id,
-                Role = request.Role,
                 JoinedAt = DateTime.UtcNow
             };
 

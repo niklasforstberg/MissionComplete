@@ -107,7 +107,6 @@ public static class AuthEndpoints
                 {
                     Id = tu.Team.Id,
                     Name = tu.Team.Name,
-                    Role = tu.Role.ToString(),
                     JoinedAt = tu.JoinedAt
                 }).ToList()
             };

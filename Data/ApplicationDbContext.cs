@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Challenge> Challenges { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<TeamUser> TeamUsers { get; set; }
+    public DbSet<TeamCoach> TeamCoaches { get; set; }
     public DbSet<ChallengeCompletion> ChallengeCompletions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -34,4 +35,4 @@ public class ApplicationDbContext : DbContext
             .WithMany(u => u.TeamUsers)
             .HasForeignKey(tu => tu.UserId);
     }
-} 
+}
