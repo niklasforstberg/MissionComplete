@@ -38,7 +38,6 @@ public static class UserEndpoints
                 {
                     Id = tu.Team.Id,
                     Name = tu.Team.Name,
-                    Role = tu.Role.ToString(),
                     JoinedAt = tu.JoinedAt
                 }).ToList()
             };
@@ -65,7 +64,6 @@ public static class UserEndpoints
             {
                 Id = tu.Team.Id,
                 Name = tu.Team.Name,
-                Role = tu.Role.ToString(),
                 JoinedAt = tu.JoinedAt
             }).ToList();
 
