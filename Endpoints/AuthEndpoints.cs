@@ -36,9 +36,7 @@ public static class AuthEndpoints
                 return Results.BadRequest("Email already registered");
             }
 
-            var userRole = request.Role == TeamUser.TeamRole.Coach
-                ? User.UserRole.Coach
-                : User.UserRole.Player;
+            var userRole = UserRole.Player;
 
             var user = new User
             {
@@ -56,7 +54,7 @@ public static class AuthEndpoints
 
         app.MapPost("/api/auth/setup/first-admin", async (CreateAdminDto request, ApplicationDbContext db, IConfiguration config) =>
         {
-            if (await db.Users.AnyAsync(u => u.Role == User.UserRole.Admin))
+            if (await db.Users.AnyAsync(u => u.Role == UserRole.Admin))
             {
                 return Results.BadRequest("Admin already exists. Use regular admin creation endpoint.");
             }
@@ -65,7 +63,7 @@ public static class AuthEndpoints
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = User.UserRole.Admin
+                Role = UserRole.Admin
             };
 
             db.Users.Add(user);
@@ -126,7 +124,7 @@ public static class AuthEndpoints
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = User.UserRole.Admin
+                Role = UserRole.Admin
             };
 
             db.Users.Add(user);

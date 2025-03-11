@@ -1,5 +1,12 @@
 namespace MissionComplete.Models;
 
+public enum UserRole
+{
+    Player,
+    Coach,
+    Admin
+}
+
 public class User
 {
     public int Id { get; set; }
@@ -14,11 +21,4 @@ public class User
     public DateTime? TokenExpires { get; set; }
 
     public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
-
-    public enum UserRole
-    {
-        Player,
-        Coach,
-        Admin
-    }
 }

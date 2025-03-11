@@ -175,12 +175,12 @@
             "name": "string",
             "description": "string?",
             "createdAt": "string",
-            "members": [{
+            "coaches": [{
               "userId": "number",
               "email": "string",
-              "role": "string",
               "joinedAt": "string"
-            }]
+            }],
+            "members": []
           },
           "401": "Unauthorized",
           "403": "Forbidden - Requires coach/admin role"
@@ -213,6 +213,11 @@
             "name": "string",
             "description": "string?",
             "createdAt": "string",
+            "coaches": [{
+              "userId": "number",
+              "email": "string",
+              "joinedAt": "string"
+            }],
             "members": [{
               "userId": "number",
               "email": "string",
@@ -242,6 +247,11 @@
             "name": "string",
             "description": "string?",
             "createdAt": "string",
+            "coaches": [{
+              "userId": "number",
+              "email": "string",
+              "joinedAt": "string"
+            }],
             "members": []
           },
           "404": "Not Found",
@@ -292,6 +302,21 @@
         "response": {
           "200": "Success",
           "404": "Member not found in team",
+          "401": "Unauthorized",
+          "403": "Forbidden - Requires coach/admin role"
+        }
+      },
+      "getMyTeams": {
+        "method": "GET",
+        "path": "/my",
+        "auth": "Required (Coach or Admin role)",
+        "description": "Get all teams where the authenticated user is a coach",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "description": "string?"
+          }],
           "401": "Unauthorized",
           "403": "Forbidden - Requires coach/admin role"
         }

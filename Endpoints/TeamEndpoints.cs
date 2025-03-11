@@ -158,7 +158,7 @@ public static class TeamEndpoints
                     Email = request.Email,
                     Invited = true,
                     InvitedById = coachId,
-                    Role = User.UserRole.Player,
+                    Role = UserRole.Player,
                     Token = token,
                     TokenExpires = DateTime.UtcNow.AddHours(48)
                 };
@@ -192,7 +192,6 @@ public static class TeamEndpoints
             {
                 UserId = user.Id,
                 Email = user.Email,
-                Role = request.Role.ToString(),
                 JoinedAt = teamUser.JoinedAt
             };
 
@@ -215,6 +214,26 @@ public static class TeamEndpoints
             return Results.Ok();
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+
+        // Get teams for authenticated coach/admin
+        app.MapGet("/api/teams/my", async (HttpContext context, ApplicationDbContext db) =>
+        {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var teams = await db.Teams
+                .Include(t => t.TeamCoaches)
+                .Where(t => t.TeamCoaches.Any(tc => tc.CoachId == userId))
+                .Select(t => new TeamListDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Description = t.Description
+                })
+                .ToListAsync();
+
+            return Results.Ok(teams);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
     }
 
     private static string GenerateSecureToken()
@@ -228,4 +247,4 @@ public static class TeamEndpoints
 
 public record CreateTeamRequest(string Name, string? Description);
 public record UpdateTeamRequest(string Name, string? Description);
-public record AddTeamMemberDto(string Email, TeamUser.TeamRole Role);
+public record AddTeamMemberDto(string Email);

@@ -8,10 +8,4 @@ public class TeamUser
     public int TeamId { get; set; }
     public Team Team { get; set; } = null!;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
-
-    public enum TeamRole
-    {
-        Player,
-        Coach
-    }
 }
