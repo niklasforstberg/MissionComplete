@@ -32,6 +32,7 @@ public static class TeamEndpoints
             };
 
             db.Teams.Add(team);
+            db.TeamCoaches.Add(teamCoach);
             await db.SaveChangesAsync();
 
             var response = new TeamDto
@@ -143,6 +144,7 @@ public static class TeamEndpoints
         app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db, SmtpEmailSender emailSender) =>
         {
             var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var coach = await db.Users.FindAsync(coachId);
 
             var team = await db.Teams.FindAsync(id);
             if (team == null)
@@ -163,13 +165,14 @@ public static class TeamEndpoints
                     TokenExpires = DateTime.UtcNow.AddHours(48)
                 };
                 db.Users.Add(user);
+                await db.SaveChangesAsync();
 
                 await emailSender.SendInvitationEmail(new InvitationDto
                 {
                     InviteeEmail = request.Email,
                     Token = token,
                     TeamName = team.Name,
-                    InviterName = user.Email
+                    InviterName = coach!.Email
                 });
             }
             else

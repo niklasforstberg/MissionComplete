@@ -68,3 +68,4 @@ Thumbs.db
 .env.local
 env.list
 env.docker
+env.mac
