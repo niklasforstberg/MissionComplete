@@ -36,13 +36,11 @@ public static class AuthEndpoints
                 return Results.BadRequest("Email already registered");
             }
 
-            var userRole = UserRole.Player;
-
             var user = new User
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = userRole
+                Role = request.Role
             };
 
             db.Users.Add(user);
