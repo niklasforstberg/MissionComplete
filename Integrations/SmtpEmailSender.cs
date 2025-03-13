@@ -72,7 +72,7 @@ namespace MissionComplete.Integrations
     <p>Hi there!</p>
     <p>You've been invited by {invitation.InviterName} to join {invitation.TeamName}.</p>
     <p>Click the button below to accept the invitation and get started:</p>
-    <a href='http://localhost:8084/accept-invitation/{invitation.Token}/accept' class='button'>Accept Invitation</a>
+    <a href='http://localhost:8085/welcome/?token={invitation.Token}' class='button'>Accept Invitation</a>
     <p>If you have any questions, please don't hesitate to contact {invitation.InviterName}.</p>
     <p>Best regards,<br>The MissionComplete Team</p>
 </body>
