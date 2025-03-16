@@ -155,6 +155,48 @@
       }
     }
   },
+  "user": {
+    "base": "/api/user",
+    "endpoints": {
+      "getUserTeams": {
+        "method": "GET",
+        "path": "/teams",
+        "auth": "Required",
+        "description": "Get all teams for the authenticated user",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "joinedAt": "string"
+          }],
+          "401": "Unauthorized"
+        }
+      },
+      "getCompletedChallenges": {
+        "method": "GET",
+        "path": "/completed-challenges",
+        "auth": "Required",
+        "description": "Get all completed challenges for the authenticated user",
+        "response": {
+          "200": [{
+            "id": "number",
+            "name": "string",
+            "description": "string?",
+            "type": "string",
+            "frequency": "string",
+            "startDate": "string",
+            "endDate": "string",
+            "teamId": "number",
+            "teamName": "string",
+            "completionId": "number",
+            "completedAt": "string",
+            "notes": "string?"
+          }],
+          "401": "Unauthorized"
+        }
+      }
+    }
+  },
   "teams": {
     "base": "/api/teams",
     "endpoints": {

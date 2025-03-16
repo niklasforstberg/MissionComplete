@@ -4,6 +4,7 @@ using MissionComplete.Models.DTOs.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using MissionComplete.Models.DTOs.Challenge;
 
 namespace MissionComplete.Endpoints;
 
@@ -68,6 +69,38 @@ public static class UserEndpoints
             }).ToList();
 
             return Results.Ok(teams);
+        })
+        .RequireAuthorization();
+
+        // Get user's completed challenges
+        app.MapGet("/api/user/completed-challenges", async (ClaimsPrincipal user, ApplicationDbContext db) =>
+        {
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return Results.Unauthorized();
+
+            var completions = await db.ChallengeCompletions
+                .Where(cc => cc.UserId == int.Parse(userId))
+                .Include(cc => cc.Challenge)
+                    .ThenInclude(c => c.Team)
+                .OrderByDescending(cc => cc.CompletedAt)
+                .Select(cc => new CompletedChallengeDto
+                {
+                    Id = cc.Challenge.Id,
+                    Name = cc.Challenge.Name,
+                    Description = cc.Challenge.Description,
+                    Type = cc.Challenge.Type.ToString(),
+                    Frequency = cc.Challenge.Frequency.ToString(),
+                    StartDate = cc.Challenge.StartDate,
+                    EndDate = cc.Challenge.EndDate,
+                    TeamId = cc.Challenge.TeamId,
+                    TeamName = cc.Challenge.Team.Name,
+                    CompletionId = cc.Id,
+                    CompletedAt = cc.CompletedAt,
+                    Notes = cc.Notes
+                })
+                .ToListAsync();
+
+            return Results.Ok(completions);
         })
         .RequireAuthorization();
     }
