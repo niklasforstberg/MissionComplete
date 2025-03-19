@@ -12,6 +12,8 @@ public enum ChallengeFrequency
 {
     Daily,
     Weekly,
+    Monthly,
+    OneTime,
     Custom
 }
 
@@ -26,9 +28,8 @@ public class Challenge
     public DateTime EndDate { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public int TeamId { get; set; }
+    public int CreatedById { get; set; }
     // Navigation properties
     public Team Team { get; set; } = null!;
-    public ICollection<ChallengeCompletion> Completions { get; set; } = new List<ChallengeCompletion>();
-    public int CreatedById { get; set; }
     public User CreatedBy { get; set; } = null!;
 }

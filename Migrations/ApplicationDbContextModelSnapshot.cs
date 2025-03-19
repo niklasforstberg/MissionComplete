@@ -145,6 +145,48 @@ namespace MissionComplete.Migrations
                     b.ToTable("TeamCoaches");
                 });
 
+            modelBuilder.Entity("MissionComplete.Models.TeamGoal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Recurrence")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TeamId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("TeamGoals");
+                });
+
             modelBuilder.Entity("MissionComplete.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -183,6 +225,48 @@ namespace MissionComplete.Migrations
                     b.HasIndex("InvitedById");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("MissionComplete.Models.UserGoal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Recurrence")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserGoals");
                 });
 
             modelBuilder.Entity("TeamUser", b =>
@@ -225,7 +309,7 @@ namespace MissionComplete.Migrations
             modelBuilder.Entity("MissionComplete.Models.ChallengeCompletion", b =>
                 {
                     b.HasOne("MissionComplete.Models.Challenge", "Challenge")
-                        .WithMany("Completions")
+                        .WithMany()
                         .HasForeignKey("ChallengeId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -260,6 +344,25 @@ namespace MissionComplete.Migrations
                     b.Navigation("Team");
                 });
 
+            modelBuilder.Entity("MissionComplete.Models.TeamGoal", b =>
+                {
+                    b.HasOne("MissionComplete.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MissionComplete.Models.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("MissionComplete.Models.User", b =>
                 {
                     b.HasOne("MissionComplete.Models.User", "InvitedBy")
@@ -267,6 +370,25 @@ namespace MissionComplete.Migrations
                         .HasForeignKey("InvitedById");
 
                     b.Navigation("InvitedBy");
+                });
+
+            modelBuilder.Entity("MissionComplete.Models.UserGoal", b =>
+                {
+                    b.HasOne("MissionComplete.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MissionComplete.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TeamUser", b =>
@@ -286,11 +408,6 @@ namespace MissionComplete.Migrations
                     b.Navigation("Team");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MissionComplete.Models.Challenge", b =>
-                {
-                    b.Navigation("Completions");
                 });
 
             modelBuilder.Entity("MissionComplete.Models.Team", b =>
