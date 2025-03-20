@@ -18,6 +18,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<ChallengeCompletion> ChallengeCompletions { get; set; }
     public DbSet<TeamGoal> TeamGoals { get; set; }
     public DbSet<UserGoal> UserGoals { get; set; }
+    public DbSet<OffSeason> OffSeasons { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -57,5 +58,12 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(cc => cc.UserId)
             .OnDelete(DeleteBehavior.NoAction); // Change to NoAction to prevent cascade cycles
+
+        modelBuilder.Entity<OffSeason>()
+            .HasOne(os => os.Team)
+            .WithMany(t => t.OffSeasons)
+            .HasForeignKey(os => os.TeamId)
+            .OnDelete(DeleteBehavior.NoAction);
+
     }
 }

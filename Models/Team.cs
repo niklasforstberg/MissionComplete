@@ -11,4 +11,5 @@ public class Team
     public ICollection<TeamUser> TeamUsers { get; set; } = new List<TeamUser>();
     public ICollection<TeamCoach> TeamCoaches { get; set; } = new List<TeamCoach>();
     public ICollection<Challenge> Challenges { get; set; } = new List<Challenge>();
+    public ICollection<OffSeason> OffSeasons { get; set; } = new List<OffSeason>();
 }
