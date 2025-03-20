@@ -99,6 +99,7 @@ app.MapAuthEndpoints();
 app.MapTeamEndpoints();
 app.MapUserEndpoints();
 app.MapChallengeEndpoints();
+app.MapGoalEndpoints();
 
 app.Run();
 
