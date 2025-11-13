@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-
+using MissionComplete.Integrations;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,7 +20,7 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below."
+        Description = "JWT Authorization header using the Bearer scheme. Enter your token in the text input below. *Bearer is not needed, just the token*"
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -81,6 +81,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString ?? throw new InvalidOperationException("Connection string not found"));
 });
 
+builder.Services.AddScoped<SmtpEmailSender>();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -97,6 +99,7 @@ app.MapAuthEndpoints();
 app.MapTeamEndpoints();
 app.MapUserEndpoints();
 app.MapChallengeEndpoints();
+app.MapGoalEndpoints();
 
 app.Run();
 

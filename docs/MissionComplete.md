@@ -21,11 +21,17 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
 
 ### 2.2 Core Functionalities
 #### 2.2.1 Authentication & User Management
-- User authentication via email/password or OAuth (Google, Facebook, etc.).
-- Role-based access control (RBAC) for different user types.
-- Self-service registration with role selection (Player/Coach).
-- Team invites automatically create Player accounts.
-- Password reset and account recovery.
+- User authentication via email/password
+- Role-based access control (RBAC) for different user types
+- Team invitation flow:
+  1. Coach invites player via email
+  2. System generates secure one-time token (expires in 48 hours)
+  3. Player receives email with password setup link
+  4. Player sets password and gains immediate access
+  5. Token becomes invalid after use
+- Coaches can invite multiple players at once
+- Invited users are automatically assigned Player role
+- Password reset and account recovery
 
 #### 2.2.2 Team & Challenge Management
 - Coaches can create and manage multiple teams but cannot be team members.
@@ -39,6 +45,17 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
   - Start and end dates.
   - Notes or instructions.
 - Players view assigned challenges and log completions.
+
+- Team Management Features:
+  - Coaches can add/remove players using their email addresses
+  - Players can be added directly from the team card interface
+  - Each team card displays:
+    - Team name and description
+    - Number of players
+    - List of current players with remove option
+    - Interface to add new players
+  - Teams can have multiple coaches and players
+  - Players can be removed from teams at any time
 
 #### 2.2.3 Progress Tracking
 - **Matrix-style visualization:**
@@ -74,6 +91,10 @@ The Off-Season Challenge Tracking App enables coaches to assign challenges and w
   - PasswordHash: Hashed password using BCrypt
   - Role: Enum (Player, Coach, Admin)
   - CreatedAt: Timestamp of user creation
+  - PasswordResetToken: Nullable string for password setup/reset
+  - TokenExpires: Nullable DateTime for token expiration
+  - Invited: Boolean indicating if user was invited
+  - InvitedById: Nullable foreign key to inviting User
 
 #### 3.2.1 Team
 - **Properties:**

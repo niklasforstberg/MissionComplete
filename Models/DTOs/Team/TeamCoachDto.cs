@@ -1,6 +1,6 @@
 namespace MissionComplete.Models.DTOs.Team;
 
-public class TeamMemberDto
+public class TeamCoachDto
 {
     public int UserId { get; set; }
     public string Email { get; set; } = string.Empty;

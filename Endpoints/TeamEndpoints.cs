@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MissionComplete.Data;
 using MissionComplete.Models;
+using MissionComplete.Integrations;
 using MissionComplete.Models.DTOs.Team;
 using System.Security.Claims;
 
@@ -13,8 +14,8 @@ public static class TeamEndpoints
         // Create team
         app.MapPost("/api/teams", async (CreateTeamDto request, HttpContext context, ApplicationDbContext db) =>
         {
-            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var user = await db.Users.FindAsync(userId);
+            var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var coach = await db.Users.FindAsync(coachId);
 
             var team = new Team
             {
@@ -23,15 +24,15 @@ public static class TeamEndpoints
                 CreatedAt = DateTime.UtcNow
             };
 
-            var teamUser = new TeamUser
+            var teamCoach = new TeamCoach
             {
                 Team = team,
-                UserId = userId,
-                Role = TeamUser.TeamRole.Coach,
+                CoachId = coachId,
                 JoinedAt = DateTime.UtcNow
             };
 
             db.Teams.Add(team);
+            db.TeamCoaches.Add(teamCoach);
             await db.SaveChangesAsync();
 
             var response = new TeamDto
@@ -40,16 +41,16 @@ public static class TeamEndpoints
                 Name = team.Name,
                 Description = team.Description,
                 CreatedAt = team.CreatedAt,
-                Members = new List<TeamMemberDto>
+                Coaches = new List<TeamCoachDto>
                 {
-                    new TeamMemberDto
+                    new TeamCoachDto
                     {
-                        UserId = userId,
-                        Email = user!.Email,
-                        Role = TeamUser.TeamRole.Coach.ToString(),
-                        JoinedAt = teamUser.JoinedAt
+                        UserId = coachId,
+                        Email = coach!.Email,
+                        JoinedAt = teamCoach.JoinedAt
                     }
-                }
+                },
+                Members = new List<TeamMemberDto>()
             };
 
             return Results.Created($"/api/teams/{team.Id}", response);
@@ -64,8 +65,7 @@ public static class TeamEndpoints
                 {
                     Id = t.Id,
                     Name = t.Name,
-                    Description = t.Description,
-                    PlayerCount = t.TeamUsers.Count(tu => tu.Role == TeamUser.TeamRole.Player)
+                    Description = t.Description
                 })
                 .ToListAsync();
 
@@ -94,7 +94,6 @@ public static class TeamEndpoints
                 {
                     UserId = tu.User.Id,
                     Email = tu.User.Email,
-                    Role = tu.Role.ToString(),
                     JoinedAt = tu.JoinedAt
                 }).ToList()
             };
@@ -142,28 +141,41 @@ public static class TeamEndpoints
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
 
         // Add team member
-        app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db) =>
+        app.MapPost("/api/teams/{id}/members", async (int id, AddTeamMemberDto request, HttpContext context, ApplicationDbContext db, SmtpEmailSender emailSender) =>
         {
             var coachId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            
+            var coach = await db.Users.FindAsync(coachId);
+
             var team = await db.Teams.FindAsync(id);
             if (team == null)
                 return Results.NotFound("Team not found");
 
+            //If the user does not exist, create them
             var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
             if (user == null)
             {
+                var token = GenerateSecureToken();
                 user = new User
                 {
                     Email = request.Email,
                     Invited = true,
                     InvitedById = coachId,
-                    Role = User.UserRole.Player
+                    Role = UserRole.Player,
+                    Token = token,
+                    TokenExpires = DateTime.UtcNow.AddHours(48)
                 };
                 db.Users.Add(user);
                 await db.SaveChangesAsync();
+
+                await emailSender.SendInvitationEmail(new InvitationDto
+                {
+                    InviteeEmail = request.Email,
+                    Token = token,
+                    TeamName = team.Name,
+                    InviterName = coach!.Email
+                });
             }
-            else 
+            else
             {
                 user.Invited = true;
                 user.InvitedById = coachId;
@@ -173,7 +185,6 @@ public static class TeamEndpoints
             {
                 TeamId = id,
                 UserId = user.Id,
-                Role = request.Role,
                 JoinedAt = DateTime.UtcNow
             };
 
@@ -184,7 +195,6 @@ public static class TeamEndpoints
             {
                 UserId = user.Id,
                 Email = user.Email,
-                Role = request.Role.ToString(),
                 JoinedAt = teamUser.JoinedAt
             };
 
@@ -207,9 +217,37 @@ public static class TeamEndpoints
             return Results.Ok();
         })
         .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+
+        // Get teams for authenticated coach/admin
+        app.MapGet("/api/teams/my", async (HttpContext context, ApplicationDbContext db) =>
+        {
+            var userId = int.Parse(context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var teams = await db.Teams
+                .Include(t => t.TeamCoaches)
+                .Where(t => t.TeamCoaches.Any(tc => tc.CoachId == userId))
+                .Select(t => new TeamListDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Description = t.Description
+                })
+                .ToListAsync();
+
+            return Results.Ok(teams);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Coach", "Admin"));
+    }
+
+    private static string GenerateSecureToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+            .Replace("/", "_")
+            .Replace("+", "-")
+            .Replace("=", "");
     }
 }
 
 public record CreateTeamRequest(string Name, string? Description);
 public record UpdateTeamRequest(string Name, string? Description);
-public record AddTeamMemberDto(string Email, TeamUser.TeamRole Role); 
+public record AddTeamMemberDto(string Email);
