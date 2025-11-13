@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using MissionComplete.Data;
@@ -8,6 +9,7 @@ using MissionComplete.Models.DTOs.Auth;
 using Microsoft.EntityFrameworkCore;
 using MissionComplete.Models.DTOs.User;
 using Microsoft.AspNetCore.Authorization;
+using MissionComplete.Integrations;
 namespace MissionComplete.Endpoints;
 
 public static class AuthEndpoints
@@ -48,6 +50,39 @@ public static class AuthEndpoints
 
             var token = GenerateJwtToken(user, config);
             return Results.Ok(new { Token = token });
+        });
+
+        app.MapPost("/api/auth/forgot-password", async (ForgotPasswordDto request, ApplicationDbContext db, SmtpEmailSender emailSender) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+
+            // Return success even if email not found (security best practice)
+            if (user == null)
+            {
+                return Results.Ok(new { Message = "If an account with that email exists, a password reset link has been sent." });
+            }
+
+            // Generate secure random token
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var token = Convert.ToBase64String(tokenBytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
+
+            // Set token and expiration (24 hours)
+            user.Token = token;
+            user.TokenExpires = DateTime.UtcNow.AddHours(24);
+            await db.SaveChangesAsync();
+
+            try
+            {
+                await emailSender.SendPasswordResetEmail(user.Email, token);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't expose it to user
+                Console.WriteLine("Failed to send password reset email to {0}: {1}", user.Email, ex.Message);
+                return Results.Ok(new { Message = "If an account with that email exists, a password reset link has been sent." });
+            }
+
+            return Results.Ok(new { Message = "If an account with that email exists, a password reset link has been sent." });
         });
 
         app.MapPost("/api/auth/setup/first-admin", async (CreateAdminDto request, ApplicationDbContext db, IConfiguration config) =>

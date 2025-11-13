@@ -25,6 +25,23 @@ export interface LoginResponse {
   Token: string;
 }
 
+export interface ForgotPasswordRequest {
+  Email: string;
+}
+
+export interface ForgotPasswordResponse {
+  Message: string;
+}
+
+export interface ResetPasswordRequest {
+  Token: string;
+  Password: string;
+}
+
+export interface ResetPasswordResponse {
+  Token: string;
+}
+
 export interface User {
   Id: number;
   Email: string;
@@ -68,6 +85,16 @@ export const authService = {
 
   setToken(token: string) {
     localStorage.setItem('token', token);
+  },
+
+  async forgotPassword(email: string): Promise<ForgotPasswordResponse> {
+    const response = await api.post<ForgotPasswordResponse>('/api/auth/forgot-password', { Email: email });
+    return response.data;
+  },
+
+  async resetPassword(token: string, password: string): Promise<ResetPasswordResponse> {
+    const response = await api.post<ResetPasswordResponse>('/api/auth/set-password', { Token: token, Password: password });
+    return response.data;
   },
 };
 
