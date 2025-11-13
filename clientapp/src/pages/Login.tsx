@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import './Login.css';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -40,8 +40,9 @@ export default function Login() {
     try {
       await login(email, password);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>;
+      setError(error.response?.data?.message || 'Invalid email or password');
     } finally {
       setLoading(false);
     }
