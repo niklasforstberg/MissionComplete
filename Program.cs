@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using MissionComplete.Integrations;
+using Microsoft.Extensions.FileProviders;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -94,12 +95,52 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Register endpoints
+// Register API endpoints
 app.MapAuthEndpoints();
 app.MapTeamEndpoints();
 app.MapUserEndpoints();
 app.MapChallengeEndpoints();
 app.MapGoalEndpoints();
+
+// Serve static files from clientapp/dist
+var clientAppPath = Path.Combine(builder.Environment.ContentRootPath, "clientapp", "dist");
+if (Directory.Exists(clientAppPath))
+{
+    var fileProvider = new PhysicalFileProvider(clientAppPath);
+
+    app.UseDefaultFiles(new DefaultFilesOptions
+    {
+        FileProvider = fileProvider
+    });
+
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = fileProvider,
+        RequestPath = ""
+    });
+
+    // Serve client app for all non-API routes
+    app.MapFallback(async (HttpContext context) =>
+    {
+        // Don't serve SPA for API routes
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = 404;
+            return;
+        }
+
+        context.Response.ContentType = "text/html";
+        var indexFile = fileProvider.GetFileInfo("index.html");
+        if (indexFile.Exists)
+        {
+            await context.Response.SendFileAsync(indexFile);
+        }
+        else
+        {
+            context.Response.StatusCode = 404;
+        }
+    });
+}
 
 app.Run();
 
