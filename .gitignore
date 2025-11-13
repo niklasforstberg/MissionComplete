@@ -69,3 +69,32 @@ Thumbs.db
 env.list
 env.docker
 env.mac
+
+# Node.js / React
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+.vite/
+.parcel-cache/
+.cache/
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# Misc
+*.pem
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
