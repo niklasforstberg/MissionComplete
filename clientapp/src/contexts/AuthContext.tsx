@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/auth';
@@ -40,10 +41,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await authService.login({ Email: email, Password: password });
-    authService.setToken(response.Token);
-    const currentUser = await authService.getCurrentUser();
-    setUser(currentUser);
+    try {
+      const response = await authService.login({ Email: email, Password: password });
+      // ASP.NET Core 8 uses camelCase JSON serialization by default
+      const token = response.token || response.Token;
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+      authService.setToken(token);
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   };
 
   const logout = () => {

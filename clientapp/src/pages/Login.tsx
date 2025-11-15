@@ -39,6 +39,7 @@ export default function Login() {
 
     try {
       await login(email, password);
+      console.log('Login successful');
       navigate('/dashboard');
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;

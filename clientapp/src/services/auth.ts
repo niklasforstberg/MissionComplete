@@ -1,11 +1,28 @@
 import axios from 'axios';
 
 // In dev, Vite proxy handles /api. In production, use relative URLs
+// If VITE_API_URL is not set, use empty string to rely on Vite proxy in dev or relative URLs in production
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.message,
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Add token to requests if available
 api.interceptors.request.use((config) => {
@@ -22,7 +39,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  Token: string;
+  Token?: string;
+  token?: string; // ASP.NET Core 8 uses camelCase by default
 }
 
 export interface ForgotPasswordRequest {
