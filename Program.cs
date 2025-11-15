@@ -7,13 +7,29 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using MissionComplete.Integrations;
 using Microsoft.Extensions.FileProviders;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure JSON options to handle enums as strings and use PascalCase
+ // This ensures all API responses use PascalCase property names
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.PropertyNameCaseInsensitive = true;
+    options.SerializerOptions.PropertyNamingPolicy = null; // null = PascalCase (no conversion)
+    options.SerializerOptions.WriteIndented = false;
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // Configure Swagger to use PascalCase in schema generation
+    options.UseInlineDefinitionsForEnums();
+    options.SupportNonNullableReferenceTypes();
+    
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

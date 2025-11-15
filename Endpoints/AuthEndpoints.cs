@@ -31,25 +31,48 @@ public static class AuthEndpoints
             return Results.Ok(new { Token = token });
         });
 
-        app.MapPost("/api/auth/register", async (RegisterDto request, ApplicationDbContext db, IConfiguration config) =>
+        app.MapPost("/api/auth/register", async (RegisterDto request, ApplicationDbContext db, SmtpEmailSender emailSender) =>
         {
+            // Prevent Admin role registration from public endpoint
+            if (request.Role == UserRole.Admin)
+            {
+                return Results.BadRequest("Admin role cannot be assigned through registration");
+            }
+
             if (await db.Users.AnyAsync(u => u.Email == request.Email))
             {
                 return Results.BadRequest("Email already registered");
             }
 
+            // Generate verification token
+            var tokenBytes = RandomNumberGenerator.GetBytes(32);
+            var verificationToken = Convert.ToBase64String(tokenBytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
+
             var user = new User
             {
                 Email = request.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                Role = request.Role
+                Role = request.Role,
+                EmailVerified = false,
+                Token = verificationToken,
+                TokenExpires = DateTime.UtcNow.AddHours(24)
             };
 
             db.Users.Add(user);
             await db.SaveChangesAsync();
 
-            var token = GenerateJwtToken(user, config);
-            return Results.Ok(new { Token = token });
+            try
+            {
+                await emailSender.SendVerificationEmail(user.Email, verificationToken);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't expose it to user
+                Console.WriteLine("Failed to send verification email to {0}: {1}", user.Email, ex.Message);
+                return Results.Ok(new { Message = "Registration successful. Please check your email to verify your account." });
+            }
+
+            return Results.Ok(new { Message = "Registration successful. Please check your email to verify your account." });
         });
 
         app.MapPost("/api/auth/forgot-password", async (ForgotPasswordDto request, ApplicationDbContext db, SmtpEmailSender emailSender) =>
@@ -213,6 +236,55 @@ public static class AuthEndpoints
             user.TokenExpires = null;
             await db.SaveChangesAsync();
 
+            var token = GenerateJwtToken(user, config);
+            return Results.Ok(new { Token = token });
+        });
+
+        app.MapPost("/api/auth/verify-email", async (VerifyEmailDto request, ApplicationDbContext db, IConfiguration config) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u =>
+                u.Token == request.Token &&
+                u.TokenExpires > DateTime.UtcNow &&
+                !u.EmailVerified);
+
+            if (user == null)
+                return Results.BadRequest("Invalid or expired verification token");
+
+            // Mark email as verified, but keep token for name collection
+            user.EmailVerified = true;
+            await db.SaveChangesAsync();
+
+            // Generate a new token for name collection (expires in 1 hour)
+            var nameCollectionTokenBytes = RandomNumberGenerator.GetBytes(32);
+            var nameCollectionToken = Convert.ToBase64String(nameCollectionTokenBytes).Replace("+", "-").Replace("/", "_").Replace("=", "");
+            user.Token = nameCollectionToken;
+            user.TokenExpires = DateTime.UtcNow.AddHours(1);
+            await db.SaveChangesAsync();
+
+            return Results.Ok(new { Token = nameCollectionToken, Message = "Email verified successfully" });
+        });
+
+        app.MapPost("/api/auth/complete-registration", async (CompleteRegistrationDto request, ApplicationDbContext db, IConfiguration config) =>
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u =>
+                u.Token == request.Token &&
+                u.TokenExpires > DateTime.UtcNow &&
+                u.EmailVerified);
+
+            if (user == null)
+                return Results.BadRequest("Invalid or expired token. Please verify your email again.");
+
+            if (string.IsNullOrWhiteSpace(request.FirstName) || string.IsNullOrWhiteSpace(request.LastName))
+                return Results.BadRequest("First name and last name are required");
+
+            // Complete registration
+            user.FirstName = request.FirstName;
+            user.LastName = request.LastName;
+            user.Token = null;
+            user.TokenExpires = null;
+            await db.SaveChangesAsync();
+
+            // Generate JWT token for login
             var token = GenerateJwtToken(user, config);
             return Results.Ok(new { Token = token });
         });

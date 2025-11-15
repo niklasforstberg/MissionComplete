@@ -39,8 +39,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  Token?: string;
-  token?: string; // ASP.NET Core 8 uses camelCase by default
+  Token: string;
 }
 
 export interface ForgotPasswordRequest {
@@ -60,6 +59,35 @@ export interface ResetPasswordResponse {
   Token: string;
 }
 
+export interface RegisterRequest {
+  Email: string;
+  Password: string;
+  Role: 'Player' | 'Coach';
+}
+
+export interface RegisterResponse {
+  Message: string;
+}
+
+export interface VerifyEmailRequest {
+  Token: string;
+}
+
+export interface VerifyEmailResponse {
+  Token: string;
+  Message: string;
+}
+
+export interface CompleteRegistrationRequest {
+  Token: string;
+  FirstName: string;
+  LastName: string;
+}
+
+export interface CompleteRegistrationResponse {
+  Token: string;
+}
+
 export interface User {
   Id: number;
   Email: string;
@@ -69,7 +97,7 @@ export interface User {
     Id: number;
     Email: string;
     Role: string;
-  };
+  } | null;
   Teams: Array<{
     Id: number;
     Name: string;
@@ -112,6 +140,21 @@ export const authService = {
 
   async resetPassword(token: string, password: string): Promise<ResetPasswordResponse> {
     const response = await api.post<ResetPasswordResponse>('/api/auth/set-password', { Token: token, Password: password });
+    return response.data;
+  },
+
+  async register(credentials: RegisterRequest): Promise<RegisterResponse> {
+    const response = await api.post<RegisterResponse>('/api/auth/register', credentials);
+    return response.data;
+  },
+
+  async verifyEmail(token: string): Promise<VerifyEmailResponse> {
+    const response = await api.post<VerifyEmailResponse>('/api/auth/verify-email', { Token: token });
+    return response.data;
+  },
+
+  async completeRegistration(credentials: CompleteRegistrationRequest): Promise<CompleteRegistrationResponse> {
+    const response = await api.post<CompleteRegistrationResponse>('/api/auth/complete-registration', credentials);
     return response.data;
   },
 };

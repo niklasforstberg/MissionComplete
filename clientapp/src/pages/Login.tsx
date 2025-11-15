@@ -113,7 +113,7 @@ export default function Login() {
             <p>
               Don't have an account?{' '}
               <Link to="/register" className="login-link">
-                Contact your coach
+                Create an account
               </Link>
             </p>
           </div>

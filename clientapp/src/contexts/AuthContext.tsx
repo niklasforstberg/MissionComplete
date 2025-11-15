@@ -2,12 +2,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/auth';
-import type { User } from '../services/auth';
+import type { User, RegisterResponse } from '../services/auth';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, role: 'Player' | 'Coach') => Promise<RegisterResponse>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -43,16 +44,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login({ Email: email, Password: password });
-      // ASP.NET Core 8 uses camelCase JSON serialization by default
-      const token = response.token || response.Token;
-      if (!token) {
+      if (!response.Token) {
         throw new Error('No token received from server');
       }
-      authService.setToken(token);
+      authService.setToken(response.Token);
       const currentUser = await authService.getCurrentUser();
       setUser(currentUser);
     } catch (error) {
       console.error('Login error:', error);
+      throw error;
+    }
+  };
+
+  const register = async (email: string, password: string, role: 'Player' | 'Coach') => {
+    try {
+      const response = await authService.register({ Email: email, Password: password, Role: role });
+      // Registration now requires email verification, so we don't log in immediately
+      // The response contains a message telling the user to check their email
+      return response;
+    } catch (error) {
+      console.error('Registration error:', error);
       throw error;
     }
   };
@@ -68,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         loading,
         login,
+        register,
         logout,
         isAuthenticated: !!user,
       }}
