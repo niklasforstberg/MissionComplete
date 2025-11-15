@@ -32,3 +32,5 @@ You can also deploy this using the provided docker file. Do not forget to add th
 
 You need to set up an email account to send emails from.
 
+## TODO update appsettings.json:
+The frontend base URL in emails is configurable via Frontend:BaseUrl in appsettings.json (defaults to http://localhost:8085).
