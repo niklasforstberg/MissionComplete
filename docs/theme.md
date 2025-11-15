@@ -1,54 +1,136 @@
 # Theme Guide for Off-Season Challenge Tracking App
 
-## 1. Color Palette
+## Design Philosophy
 
-### **Primary Colors (Green Base)**
-- **Deep Forest Green** `#2C5F2D` - Used for primary buttons, headers, and key elements.
-- **Sage Green** `#A3B18A` - Used for secondary buttons, backgrounds, and subtle highlights.
+The app's design emphasizes energy, motivation, and modern aesthetics. The theme is built around distinctive typography, a cohesive color palette, and thoughtful use of motion and depth.
 
-### **Secondary Colors (Neutrals & Metallics)**
-- **Charcoal** `#3A3A3A` - Used for text, borders, and dark mode backgrounds.
-- **Soft Beige** `#EAE0D5` - Used for background areas, card elements, and contrast.
-- **Gold Accent** `#C2A878` - Used sparingly for icons, highlights, and premium UI elements.
+## Typography
 
-## 2. UI Usage Guide
+### Font Families
 
-### **Primary Elements**
-- **Headers & Key Sections:** Deep Forest Green `#2C5F2D`
-- **Primary Buttons:** Deep Forest Green `#2C5F2D` with Soft Beige `#EAE0D5` text
-- **Secondary Buttons:** Sage Green `#A3B18A` with Charcoal `#3A3A3A` text
+The app uses three distinct font families to create visual hierarchy and interest:
 
-### **Backgrounds & Cards**
-- **Light Mode Background:** Soft Beige `#EAE0D5`
-- **Dark Mode Background:** Charcoal `#3A3A3A`
-- **Cards & Modals:** Sage Green `#A3B18A` with subtle shadows
+1. **Bricolage Grotesque** (Display/Headings)
+   - Weights: 200, 400, 700, 800
+   - Usage: Headlines, titles, brand elements
+   - Characteristics: Geometric sans-serif with distinctive character, excellent for large display text
+   - CSS Variable: `--font-display`
 
-### **Text & Typography**
-- **Headings:** Deep Forest Green `#2C5F2D`
-- **Body Text:** Charcoal `#3A3A3A`
-- **Muted Text / Placeholders:** Soft Beige `#EAE0D5`
+2. **IBM Plex Sans** (Body Text)
+   - Weights: 300, 400, 600, 700
+   - Usage: Body text, UI elements, buttons, forms
+   - Characteristics: Clean, technical, highly readable
+   - CSS Variable: `--font-body`
 
-### **Accents & Highlights**
-- **Active States & Hover Effects:** Darker shade of Deep Forest Green `#244E24`
-- **Success Messages:** Sage Green `#A3B18A`
-- **Warnings:** Gold Accent `#C2A878`
-- **Errors:** Deep Burgundy Red `#8B2F2F` (only when needed)
+3. **Fira Code** (Monospace)
+   - Weights: 400, 600, 700
+   - Usage: Navigation elements, code-like UI components
+   - Characteristics: Programming font with ligatures, technical aesthetic
+   - CSS Variable: `--font-mono`
 
-## 3. Typography Recommendations
-- **Font Family:** Use a modern, elegant sans-serif like *Inter*, *Lora*, or *Playfair Display*.
-- **Title Font Weight:** Bold (700)
-- **Body Font Weight:** Regular (400)
-- **Line Height:** 1.5 for readability
+### Typography Principles
 
-## 4. Design Principles
-- **Minimalist & Elegant:** Avoid excessive gradients or loud colors.
-- **Consistency:** Maintain uniform padding, margins, and shadow depths.
-- **Subtle Animations:** Use soft transitions for hover and active states.
+- **High Contrast**: Use extreme weight differences (200 vs 800) rather than subtle variations
+- **Size Jumps**: Use 3x+ size differences between hierarchy levels, not 1.5x
+- **Letter Spacing**: Negative letter spacing (-0.03em to -0.04em) for large display text
+- **Line Height**: Tighter for headlines (0.95), more generous for body text (1.6-1.7)
 
-## 5. Implementation Notes
-- Define these colors as CSS variables or Tailwind theme extensions.
-- Ensure accessibility contrast for readability (AA or AAA compliance where possible).
-- Test colors in both light and dark mode settings.
+## Color Palette
 
----
-This guide ensures a refined, premium look while maintaining usability. Let me know if you'd like any refinements! 🚀
+### Base Colors
+
+- **Primary Background**: `#0f172a` (Deep slate blue)
+- **Secondary Background**: `#1e293b` (Slate)
+- **Tertiary Background**: `#334155` (Lighter slate)
+
+### Accent Colors
+
+- **Primary Accent (Orange)**: `#f97316`
+  - Light: `#fb923c`
+  - Dark: `#ea580c`
+  - Usage: Primary actions, highlights, energetic elements
+  - Psychology: Energetic, motivating, warm
+
+- **Secondary Accent (Cyan)**: `#06b6d4`
+  - Light: `#22d3ee`
+  - Dark: `#0891b2`
+  - Usage: Secondary actions, links, complementary highlights
+  - Psychology: Cool, modern, refreshing
+
+### Text Colors
+
+- **Primary Text**: `#f8fafc` (Warm white)
+- **Secondary Text**: `#cbd5e1` (Light gray)
+- **Tertiary Text**: `#94a3b8` (Muted gray)
+
+### Border Colors
+
+- **Primary Border**: `rgba(249, 115, 22, 0.2)` (Orange, 20% opacity)
+- **Secondary Border**: `rgba(6, 182, 212, 0.2)` (Cyan, 20% opacity)
+- **Subtle Border**: `rgba(248, 250, 252, 0.1)` (White, 10% opacity)
+
+## Design Patterns
+
+### Backgrounds
+
+- **Layered Gradients**: Use radial gradients with orange and cyan for depth
+- **Grid Patterns**: Subtle animated grid overlays for texture
+- **Glass Morphism**: Semi-transparent cards with backdrop blur
+- **Orb Effects**: Large blurred gradient orbs for atmospheric depth
+
+### Components
+
+- **Cards**: Semi-transparent backgrounds (`rgba(30, 41, 59, 0.4)`) with subtle borders
+- **Buttons**: Gradient backgrounds with strong shadows on hover
+- **Forms**: Dark inputs with orange focus states
+- **Typography**: Gradient text for headlines using orange-to-cyan
+
+### Motion
+
+- **Staggered Animations**: Sequential reveals for list items
+- **Hover Effects**: Transform and shadow changes (translateY, box-shadow)
+- **Page Load**: Fade-in-up animations with delays
+- **Grid Drift**: Subtle animated background patterns
+
+## CSS Variables
+
+All theme values are defined as CSS variables in `:root` for easy maintenance:
+
+```css
+--color-bg-primary: #0f172a;
+--color-bg-secondary: #1e293b;
+--color-accent-primary: #f97316;
+--color-accent-secondary: #06b6d4;
+--color-text-primary: #f8fafc;
+--font-display: 'Bricolage Grotesque', sans-serif;
+--font-body: 'IBM Plex Sans', sans-serif;
+--font-mono: 'Fira Code', monospace;
+```
+
+## Avoiding Generic Patterns
+
+The theme intentionally avoids:
+
+- ❌ Generic fonts (Inter, Roboto, Open Sans, Lato)
+- ❌ Purple gradients on white backgrounds
+- ❌ Excessive centered layouts
+- ❌ Uniform rounded corners everywhere
+- ❌ Timid color palettes with evenly-distributed colors
+- ❌ Predictable component patterns
+
+Instead, it embraces:
+
+- ✅ Distinctive, high-quality fonts
+- ✅ Dominant colors with sharp accents
+- ✅ Asymmetric, dynamic layouts
+- ✅ Varied border radius (6px, 8px, 12px, 16px)
+- ✅ Bold color choices (orange + cyan)
+- ✅ Creative, context-specific design
+
+## Implementation Notes
+
+- All CSS is centralized in `clientapp/src/index.css`
+- No inline styles except where absolutely necessary
+- Use CSS variables for all color and font references
+- Maintain consistent spacing using rem units
+- Use clamp() for responsive typography

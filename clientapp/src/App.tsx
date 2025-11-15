@@ -10,14 +10,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh',
-        fontFamily: 'JetBrains Mono, monospace',
-        color: '#a3b18a'
-      }}>
+      <div className="loading-screen">
         Loading...
       </div>
     );
@@ -30,50 +23,17 @@ function Dashboard() {
   const { user, logout } = useAuth();
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      padding: '2rem',
-      background: '#0a0e1a',
-      color: '#eae0d5',
-      fontFamily: 'JetBrains Mono, monospace'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h1 style={{ 
-            fontFamily: 'Crimson Text, serif',
-            fontSize: '2rem',
-            background: 'linear-gradient(135deg, #a3b18a 0%, #2c5f2d 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            margin: 0
-          }}>
-            Dashboard
-          </h1>
-          <button
-            onClick={logout}
-            style={{
-              padding: '0.5rem 1.5rem',
-              background: 'transparent',
-              border: '1px solid rgba(163, 177, 138, 0.3)',
-              borderRadius: '4px',
-              color: '#a3b18a',
-              cursor: 'pointer',
-              fontFamily: 'inherit'
-            }}
-          >
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Dashboard</h1>
+          <button onClick={logout} className="dashboard-logout-btn">
             Logout
           </button>
         </div>
-        <div style={{
-          background: 'rgba(163, 177, 138, 0.05)',
-          border: '1px solid rgba(163, 177, 138, 0.2)',
-          borderRadius: '8px',
-          padding: '2rem'
-        }}>
+        <div className="dashboard-card">
           <p>Welcome, {user?.Email}!</p>
-          <p style={{ color: 'rgba(234, 224, 213, 0.6)', fontSize: '0.9rem' }}>
-            Role: {user?.Role}
-          </p>
+          <p className="dashboard-role">Role: {user?.Role}</p>
         </div>
       </div>
     </div>
