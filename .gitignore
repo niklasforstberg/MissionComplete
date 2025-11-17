@@ -93,6 +93,10 @@ coverage/
 *.lcov
 .nyc_output/
 
+# Logs
+logs/
+*.log
+
 # Misc
 *.pem
 .eslintcache
