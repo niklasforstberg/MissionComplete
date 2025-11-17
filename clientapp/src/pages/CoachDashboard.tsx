@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { teamService, type TeamListDto } from '../services/team';
+import CreateTeamForm from '../components/CreateTeamForm';
 
 export default function CoachDashboard() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const [teams, setTeams] = useState<TeamListDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -26,6 +29,17 @@ export default function CoachDashboard() {
     fetchTeams();
   }, []);
 
+  useEffect(() => {
+    if (!loading && !error && teams.length === 1 && !showCreateForm) {
+      navigate(`/team/${teams[0].Id}`, { replace: true });
+    }
+  }, [loading, error, teams, showCreateForm, navigate]);
+
+  const handleTeamCreated = (newTeam: TeamListDto) => {
+    setTeams([...teams, newTeam]);
+    setShowCreateForm(false);
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -36,21 +50,54 @@ export default function CoachDashboard() {
           </button>
         </div>
 
-        <div className="dashboard-card">
-          <p className="dashboard-welcome">Welcome, {user?.Email}!</p>
-        </div>
+        {showCreateForm && (
+          <CreateTeamForm
+            onCancel={() => setShowCreateForm(false)}
+            onSuccess={handleTeamCreated}
+          />
+        )}
 
         {loading ? (
           <div className="dashboard-card">
             <p>Loading teams...</p>
           </div>
-        ) : error ? (
+        ) : error && !showCreateForm ? (
           <div className="dashboard-card">
             <p className="dashboard-error">{error}</p>
           </div>
+        ) : teams.length === 0 ? (
+          <div className="dashboard-card">
+            <p className="dashboard-info">
+              You have no team yet.{' '}
+              <button
+                onClick={() => setShowCreateForm(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-accent-primary)',
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  fontSize: 'inherit',
+                  padding: 0,
+                }}
+              >
+                Create one!
+              </button>
+            </p>
+          </div>
         ) : teams.length > 1 ? (
           <div className="dashboard-card">
-            <h2 className="dashboard-section-title">Your Teams</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 className="dashboard-section-title" style={{ margin: 0 }}>Your Teams</h2>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="add-team-button"
+                title="Add Team"
+              >
+                +
+              </button>
+            </div>
             <div className="team-list">
               {teams.map((team) => (
                 <Link
@@ -69,21 +116,7 @@ export default function CoachDashboard() {
               ))}
             </div>
           </div>
-        ) : teams.length === 1 ? (
-          <div className="dashboard-card">
-            <p className="dashboard-info">You have one team.</p>
-            <Link
-              to={`/team/${teams[0].Id}`}
-              className="dashboard-button"
-            >
-              Go to Team
-            </Link>
-          </div>
-        ) : (
-          <div className="dashboard-card">
-            <p className="dashboard-info">You don't have any teams yet.</p>
-          </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

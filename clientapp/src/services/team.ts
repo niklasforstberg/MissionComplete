@@ -35,6 +35,11 @@ export interface TeamDto {
   }>;
 }
 
+export interface CreateTeamDto {
+  Name: string;
+  Description?: string;
+}
+
 export const teamService = {
   async getMyTeams(): Promise<TeamListDto[]> {
     const response = await api.get<TeamListDto[]>('/api/teams/my');
@@ -43,6 +48,11 @@ export const teamService = {
 
   async getTeam(id: number): Promise<TeamDto> {
     const response = await api.get<TeamDto>(`/api/teams/${id}`);
+    return response.data;
+  },
+
+  async createTeam(data: CreateTeamDto): Promise<TeamDto> {
+    const response = await api.post<TeamDto>('/api/teams', data);
     return response.data;
   },
 };

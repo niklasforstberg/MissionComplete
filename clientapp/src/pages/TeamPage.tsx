@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { teamService, type TeamDto } from '../services/team';
+import { teamService, type TeamDto, type TeamListDto } from '../services/team';
+import CreateTeamForm from '../components/CreateTeamForm';
 
 export default function TeamPage() {
   const { id } = useParams<{ id: string }>();
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [team, setTeam] = useState<TeamDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     const fetchTeam = async () => {
@@ -29,6 +32,10 @@ export default function TeamPage() {
     fetchTeam();
   }, [id]);
 
+  const handleTeamCreated = (newTeam: TeamListDto) => {
+    navigate(`/team/${newTeam.Id}`);
+  };
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
@@ -41,6 +48,13 @@ export default function TeamPage() {
           </button>
         </div>
 
+        {showCreateForm && (
+          <CreateTeamForm
+            onCancel={() => setShowCreateForm(false)}
+            onSuccess={handleTeamCreated}
+          />
+        )}
+
         {loading ? (
           <div className="dashboard-card">
             <p>Loading team...</p>
@@ -51,12 +65,14 @@ export default function TeamPage() {
           </div>
         ) : team ? (
           <>
-            <div className="dashboard-card">
-              <h1 className="dashboard-title">{team.Name}</h1>
-              {team.Description && (
-                <p className="team-description">{team.Description}</p>
-              )}
-            </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h1 className="dashboard-title" style={{ margin: 0 }}>{team.Name}</h1>
+                  {team.Description && (
+                    <p className="team-description">{team.Description}</p>
+                  )}
+                </div>
+              </div>
 
             <div className="dashboard-card">
               <h2 className="dashboard-section-title">Add Players</h2>
