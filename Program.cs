@@ -9,20 +9,38 @@ using MissionComplete.Integrations;
 using Microsoft.Extensions.FileProviders;
 using System.Text.Json.Serialization;
 using Serilog;
+using Serilog.Sinks.File;
+using Serilog.Events;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Configure Serilog
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .ReadFrom.Configuration(context.Configuration)
-    .ReadFrom.Services(services)
-    .Enrich.FromLogContext()
+// Bootstrap logger for startup errors
+Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
-    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7));
+    .CreateBootstrapLogger();
 
 try
 {
-    Log.Information("Starting web application");
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Configure Serilog
+    builder.Host.UseSerilog((context, services, configuration) =>
+    {
+        var logLevel = context.Configuration.GetValue<string>("Serilog:MinimumLevel:Default") ?? "Information";
+        var minLevel = Enum.Parse<Serilog.Events.LogEventLevel>(logLevel, true);
+
+        configuration
+            .MinimumLevel.Is(minLevel)
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.AspNetCore.Hosting", Serilog.Events.LogEventLevel.Information)
+            .MinimumLevel.Override("Microsoft.Hosting.Lifetime", Serilog.Events.LogEventLevel.Information)
+            .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+            .Enrich.FromLogContext()
+            .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+            .WriteTo.File("logs/log-.txt",
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7,
+                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {Message:lj}{NewLine}{Exception}");
+    });
 
     // Configure JSON options to handle enums as strings and use PascalCase
     // This ensures all API responses use PascalCase property names
@@ -108,8 +126,16 @@ try
             // Fallback to environment variable for Docker support
             connectionString = Environment.GetEnvironmentVariable("DefaultConnection");
         }
-        options.UseSqlServer(connectionString ?? throw new InvalidOperationException("Connection string not found"));
-    });
+        options.UseSqlServer(connectionString ?? throw new InvalidOperationException("Connection string not found"),
+            sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure();
+                sqlOptions.CommandTimeout(30);
+            });
+        // Don't validate connection on startup
+        options.EnableServiceProviderCaching();
+        options.EnableSensitiveDataLogging(false);
+    }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
     builder.Services.AddScoped<SmtpEmailSender>();
 
@@ -117,10 +143,8 @@ try
 
     app.UseSwagger();
     app.UseSwaggerUI();
-
     // Enable CORS
     app.UseCors("AllowAll");
-
     app.UseAuthentication();
     app.UseAuthorization();
 
