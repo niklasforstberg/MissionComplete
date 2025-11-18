@@ -11,6 +11,8 @@ import CoachDashboard from './pages/CoachDashboard';
 import PlayerDashboard from './pages/PlayerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import TeamPage from './pages/TeamPage';
+import ExercisesPage from './pages/ExercisesPage';
+import DashboardLayout from './components/DashboardLayout';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -60,7 +62,19 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <RoleBasedDashboard />
+                <DashboardLayout>
+                  <RoleBasedDashboard />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/exercises"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <ExercisesPage />
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />
@@ -68,7 +82,9 @@ function App() {
             path="/team/:id"
             element={
               <ProtectedRoute>
-                <TeamPage />
+                <DashboardLayout>
+                  <TeamPage />
+                </DashboardLayout>
               </ProtectedRoute>
             }
           />

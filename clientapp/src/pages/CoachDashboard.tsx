@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { teamService, type TeamListDto } from '../services/team';
 import CreateTeamForm from '../components/CreateTeamForm';
 
 export default function CoachDashboard() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
   const [teams, setTeams] = useState<TeamListDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,12 +26,6 @@ export default function CoachDashboard() {
     fetchTeams();
   }, []);
 
-  useEffect(() => {
-    if (!loading && !error && teams.length === 1 && !showCreateForm) {
-      navigate(`/team/${teams[0].Id}`, { replace: true });
-    }
-  }, [loading, error, teams, showCreateForm, navigate]);
-
   const handleTeamCreated = (newTeam: TeamListDto) => {
     setTeams([...teams, newTeam]);
     setShowCreateForm(false);
@@ -45,9 +36,6 @@ export default function CoachDashboard() {
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1 className="dashboard-title">Coach Dashboard</h1>
-          <button onClick={logout} className="dashboard-logout-btn">
-            Logout
-          </button>
         </div>
 
         {showCreateForm && (
@@ -86,16 +74,15 @@ export default function CoachDashboard() {
               </button>
             </p>
           </div>
-        ) : teams.length > 1 ? (
-          <div className="dashboard-card">
+        ) : teams.length >= 1 ? (
+          <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 className="dashboard-section-title" style={{ margin: 0 }}>Your Teams</h2>
               <button
                 onClick={() => setShowCreateForm(true)}
                 className="add-team-button"
                 title="Add Team"
-              >
-                +
+              >+
               </button>
             </div>
             <div className="team-list">
@@ -111,11 +98,10 @@ export default function CoachDashboard() {
                       <p className="team-link-description">{team.Description}</p>
                     )}
                   </div>
-                  <span className="team-link-arrow">→</span>
                 </Link>
               ))}
             </div>
-          </div>
+          </>
         ) : null}
       </div>
     </div>
