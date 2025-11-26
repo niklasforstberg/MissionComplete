@@ -9,11 +9,12 @@ This is the web api for the app MissionComplete, that lets a coach give the team
 5. dotnet user-secrets set "ConnectionStrings:DefaultConnection" "your-database-connection-string"
 6. dotnet user-secrets set "Jwt:Issuer" "http://localhost"
 7. dotnet user-secrets set "Jwt:Audience" "http://localhost"
-8. dotnet user-secrets set "SmtpServer" "smtp.gmail.com"
-9. dotnet user-secrets set "SmtpPort" "25"
-10. dotnet user-secrets set "SmtpUsername" "your-email@gmail.com"
-11. dotnet user-secrets set "SmtpPassword" "your-app-password"
-12. dotnet user-secrets set "SmtpEnableSsl" "true"
+dotnet user-secrets set "smtp:server" "mailserver"
+dotnet user-secrets set "smtp:sslport" "secretport"
+dotnet user-secrets set "smtp:username" "usernamem"
+dotnet user-secrets set "smtp:password" "secretpassword
+dotnet user-secrets set "smtp:enablessl" "true"
+
 13. dotnet migrations add InitialCreate
 14. dotnet database update
 15. dotnet run
