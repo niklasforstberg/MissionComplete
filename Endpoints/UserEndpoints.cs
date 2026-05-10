@@ -72,6 +72,26 @@ public static class UserEndpoints
         })
         .RequireAuthorization();
 
+        // Get all users (admin only)
+        app.MapGet("/api/users", async (ApplicationDbContext db) =>
+        {
+            var users = await db.Users
+                .Select(u => new
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FirstName = u.FirstName,
+                    LastName = u.LastName,
+                    Role = u.Role.ToString(),
+                    EmailVerified = u.EmailVerified,
+                    CreatedAt = u.CreatedAt
+                })
+                .OrderBy(u => u.CreatedAt)
+                .ToListAsync();
+            return Results.Ok(users);
+        })
+        .RequireAuthorization(policy => policy.RequireRole("Admin"));
+
         // Get user's completed challenges
         app.MapGet("/api/user/completed-challenges", async (ClaimsPrincipal user, ApplicationDbContext db) =>
         {

@@ -204,5 +204,35 @@ public static class ChallengeEndpoints
             return Results.Ok(challenges);
         })
         .RequireAuthorization();
+
+        // Get team leaderboard
+        app.MapGet("/api/team/{teamId}/leaderboard", async (int teamId, ApplicationDbContext db) =>
+        {
+            var members = await db.TeamUsers
+                .Where(tu => tu.TeamId == teamId)
+                .Include(tu => tu.User)
+                .ToListAsync();
+
+            var completionCounts = await db.ChallengeCompletions
+                .Where(cc => cc.Challenge.TeamId == teamId)
+                .GroupBy(cc => cc.UserId)
+                .Select(g => new { UserId = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var leaderboard = members
+                .Select(m => new
+                {
+                    UserId = m.UserId,
+                    Email = m.User.Email,
+                    FirstName = m.User.FirstName,
+                    LastName = m.User.LastName,
+                    CompletionCount = completionCounts.FirstOrDefault(c => c.UserId == m.UserId)?.Count ?? 0
+                })
+                .OrderByDescending(m => m.CompletionCount)
+                .ToList();
+
+            return Results.Ok(leaderboard);
+        })
+        .RequireAuthorization();
     }
 }

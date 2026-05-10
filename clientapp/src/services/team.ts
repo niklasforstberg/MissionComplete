@@ -23,16 +23,31 @@ export interface TeamListDto {
   Description?: string;
 }
 
+export interface TeamMemberDto {
+  UserId: number;
+  Email: string;
+  JoinedAt: string;
+}
+
+export interface TeamCoachDto {
+  UserId: number;
+  Email: string;
+  JoinedAt: string;
+}
+
 export interface TeamDto {
   Id: number;
   Name: string;
   Description?: string;
   CreatedAt: string;
-  Members: Array<{
-    UserId: number;
-    Email: string;
-    JoinedAt: string;
-  }>;
+  Coaches: TeamCoachDto[];
+  Members: TeamMemberDto[];
+}
+
+export interface UserTeamDto {
+  Id: number;
+  Name: string;
+  JoinedAt: string;
 }
 
 export interface CreateTeamDto {
@@ -46,6 +61,16 @@ export const teamService = {
     return response.data;
   },
 
+  async getMyPlayerTeams(): Promise<UserTeamDto[]> {
+    const response = await api.get<UserTeamDto[]>('/api/user/teams');
+    return response.data;
+  },
+
+  async getAllTeams(): Promise<TeamListDto[]> {
+    const response = await api.get<TeamListDto[]>('/api/teams');
+    return response.data;
+  },
+
   async getTeam(id: number): Promise<TeamDto> {
     const response = await api.get<TeamDto>(`/api/teams/${id}`);
     return response.data;
@@ -54,6 +79,15 @@ export const teamService = {
   async createTeam(data: CreateTeamDto): Promise<TeamDto> {
     const response = await api.post<TeamDto>('/api/teams', data);
     return response.data;
+  },
+
+  async inviteMember(teamId: number, email: string): Promise<TeamMemberDto> {
+    const response = await api.post<TeamMemberDto>(`/api/teams/${teamId}/members`, { Email: email });
+    return response.data;
+  },
+
+  async removeMember(teamId: number, userId: number): Promise<void> {
+    await api.delete(`/api/teams/${teamId}/members/${userId}`);
   },
 };
 

@@ -1,6 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import UserMenu from './UserMenu';
 import Sidebar from './Sidebar';
 

@@ -1,13 +1,10 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { authService } from '../services/auth';
-import { useAuth } from '../contexts/AuthContext';
 
 export default function CompleteRegistration() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { login } = useAuth();
   const [token, setToken] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -48,10 +45,6 @@ export default function CompleteRegistration() {
       
       // Set token and load user via auth context
       authService.setToken(response.Token);
-      const currentUser = await authService.getCurrentUser();
-      
-      // Update auth context
-      // We'll need to manually update the user state or reload
       window.location.href = '/dashboard';
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>;
